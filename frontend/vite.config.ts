@@ -18,4 +18,10 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    host: true,
+    port: Number(process.env.PORT) || 8080,
+    // Railway (and similar) proxy with a public Host header — required for vite preview in prod.
+    allowedHosts: true,
+  },
 })
