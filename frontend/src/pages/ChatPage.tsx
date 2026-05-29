@@ -271,7 +271,7 @@ export function ChatPage() {
   )
 
   return (
-    <div className="flex gap-4 lg:gap-6 w-full h-[calc(100dvh-5.5rem)] lg:h-[calc(100dvh-6rem)] min-h-[480px]">
+    <div className="flex gap-4 lg:gap-6 w-full h-full min-h-0 overflow-hidden">
       <aside className="w-64 lg:w-72 xl:w-80 shrink-0 glass rounded-xl flex flex-col overflow-hidden">
         <div className="p-4 border-b border-white/10">
           <h2 className="font-display font-bold text-xl lg:text-2xl flex items-center gap-2">

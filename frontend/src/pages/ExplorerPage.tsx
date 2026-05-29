@@ -7,7 +7,7 @@ import { api } from '../api/client'
 import { ExplorerCharts } from '../components/ExplorerCharts'
 import { PlayerCardModal } from '../components/PlayerCardModal'
 import { ScatterMap } from '../components/ScatterMap'
-import { Button, CountUp, GlassCard, Spinner } from '../components/ui'
+import { Button, GlassCard, Spinner } from '../components/ui'
 import { useFilters } from '../hooks/useFilters'
 import type { Player } from '../types'
 
@@ -59,13 +59,8 @@ export function ExplorerPage() {
 
   return (
     <div className="page-shell">
-      <div className="flex flex-wrap justify-between items-end gap-4">
-        <div>
-          <h2 className="page-title text-white">{t('explorer')}</h2>
-          <p className="page-subtitle">
-            <CountUp value={players.length} className="text-fut-emerald font-stats font-bold" /> {t('players_shown')}
-          </p>
-        </div>
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        <h2 className="page-title text-white">{t('explorer')}</h2>
         <Button variant="gold" loading={insightMutation.isPending} onClick={() => insightMutation.mutate()}>
           <Sparkles className="w-4 h-4" />
           {t('ai_insights')}

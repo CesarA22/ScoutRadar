@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 
 interface ChartInfoHelpProps {
   hint: string
@@ -13,7 +14,7 @@ export function ChartInfoHelp({ hint, title, detail }: ChartInfoHelpProps) {
 
   return (
     <>
-      <div className="group relative">
+      <div className="group relative z-10">
         <button
           type="button"
           onClick={e => {
@@ -30,13 +31,14 @@ export function ChartInfoHelp({ hint, title, detail }: ChartInfoHelpProps) {
         </div>
       </div>
 
-      <AnimatePresence>
-        {open && (
+      {open && createPortal(
+        <AnimatePresence>
           <motion.div
+            key="chart-info-modal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           >
             <motion.div
@@ -57,8 +59,9 @@ export function ChartInfoHelp({ hint, title, detail }: ChartInfoHelpProps) {
               <p className="mt-4 text-sm text-white/80 leading-relaxed whitespace-pre-wrap">{detail}</p>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body,
+      )}
     </>
   )
 }
