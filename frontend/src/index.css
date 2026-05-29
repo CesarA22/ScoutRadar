@@ -27,7 +27,7 @@
 }
 
 html {
-  font-size: clamp(15px, 0.35vw + 14px, 18px);
+  font-size: clamp(14px, 0.15vw + 13.5px, 16px);
 }
 
 body {
@@ -45,15 +45,15 @@ body {
 
 /* Shared page layout — full width, scales with viewport */
 .page-shell {
-  @apply w-full space-y-5 sm:space-y-6 lg:space-y-8;
+  @apply w-full space-y-4 sm:space-y-5 lg:space-y-6;
 }
 
 .page-title {
-  @apply font-display text-3xl sm:text-4xl lg:text-5xl xl:text-[3.25rem] font-bold tracking-tight;
+  @apply font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight;
 }
 
 .page-subtitle {
-  @apply text-white/50 text-sm sm:text-base lg:text-lg mt-1.5;
+  @apply text-white/50 text-sm sm:text-base mt-1;
 }
 
 .fill-main {

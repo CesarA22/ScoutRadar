@@ -18,7 +18,7 @@ export function ComparePage() {
   const [playerA, setPlayerA] = useState('')
   const [playerB, setPlayerB] = useState('')
   const [insight, setInsight] = useState('')
-  const radarSize = useResponsiveSize(260, 360)
+  const radarSize = useResponsiveSize(240, 300)
 
   const { data: playersData, isLoading } = useQuery({
     queryKey: ['players', filters],
@@ -81,7 +81,7 @@ export function ComparePage() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 lg:space-y-8">
           <div className="flex flex-wrap justify-center items-center gap-8 lg:gap-16 xl:gap-24 py-4">
             <PlayerFifaCard player={pa} allPlayers={players} />
-            <div className="font-display text-5xl lg:text-6xl xl:text-7xl text-fut-gold/50">VS</div>
+            <div className="font-display text-4xl lg:text-5xl text-fut-gold/50">VS</div>
             <PlayerFifaCard player={pb} allPlayers={players} />
           </div>
 

@@ -108,7 +108,7 @@ export function ExplorerCharts({ players }: ExplorerChartsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 shrink-0">
       {charts.map(c => (
-        <GlassCard key={c.key} className="h-[clamp(200px,22vh,340px)] p-2 lg:p-3 relative">
+        <GlassCard key={c.key} className="h-[200px] sm:h-[220px] lg:h-[240px] p-2 relative overflow-hidden">
           <div className="absolute top-2 right-2 z-10">
             <ChartInfoHelp hint={c.hint} title={c.title} detail={c.detail} />
           </div>

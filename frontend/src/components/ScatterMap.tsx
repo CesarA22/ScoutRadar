@@ -39,13 +39,14 @@ export function ScatterMap({ players, onSelect, selectedKey }: ScatterMapProps) 
   })
 
   return (
+    <div className="w-full h-full min-h-0">
     <Plot
       data={traces}
       layout={{
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(13, 19, 32, 0.6)',
         font: { color: 'rgba(255,255,255,0.7)', family: 'Inter', size: 11 },
-        margin: { l: 48, r: 16, t: 24, b: 48 },
+        margin: { l: 48, r: 16, t: 32, b: 56 },
         xaxis: {
           title: { text: t('map_axis_x'), font: { color: 'rgba(244,207,107,0.6)', size: 11 } },
           gridcolor: 'rgba(255,255,255,0.06)',
@@ -56,7 +57,8 @@ export function ScatterMap({ players, onSelect, selectedKey }: ScatterMapProps) 
           gridcolor: 'rgba(255,255,255,0.06)',
           zerolinecolor: 'rgba(255,255,255,0.08)',
         },
-        legend: { orientation: 'h', y: -0.12, font: { size: 10 } },
+        legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: -0.02, font: { size: 10 } },
+        autosize: true,
         hovermode: 'closest',
       }}
       config={{ displayModeBar: false, responsive: true }}
@@ -68,5 +70,6 @@ export function ScatterMap({ players, onSelect, selectedKey }: ScatterMapProps) 
         if (pt) onSelect(pt)
       }}
     />
+    </div>
   )
 }

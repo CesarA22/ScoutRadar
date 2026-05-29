@@ -14,8 +14,8 @@ interface PlayerFifaCardProps {
 }
 
 const SIZE_CLASS = {
-  mini: 'w-[9.5rem] sm:w-[10.5rem] md:w-[11.5rem] lg:w-[12.5rem] xl:w-[13.5rem]',
-  full: 'w-[14rem] sm:w-[16rem] md:w-[17rem] lg:w-[19rem] xl:w-[20rem]',
+  mini: 'w-[8.75rem] sm:w-[9.5rem] md:w-[10rem] lg:w-[11rem]',
+  full: 'w-[12.5rem] sm:w-[14rem] md:w-[15rem] lg:w-[16rem]',
 } as const
 
 export function PlayerFifaCard({ player, allPlayers, size = 'full', index = 0, onClick }: PlayerFifaCardProps) {
@@ -44,7 +44,7 @@ export function PlayerFifaCard({ player, allPlayers, size = 'full', index = 0, o
       <div className={`relative h-full flex flex-col ${isMini ? 'p-2.5 sm:p-3' : 'p-3 sm:p-4'}`} style={{ color: style.text }}>
         <div className="flex justify-between items-start">
           <div>
-            <div className={`font-display font-extrabold leading-none ${isMini ? 'text-3xl sm:text-4xl' : 'text-5xl sm:text-6xl lg:text-7xl'}`}>
+            <div className={`font-display font-extrabold leading-none ${isMini ? 'text-2xl sm:text-3xl' : 'text-4xl sm:text-5xl lg:text-6xl'}`}>
               {card.overall}
             </div>
             <div className={`font-stats font-bold uppercase ${isMini ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'}`}>{card.positionShort}</div>
