@@ -1,80 +1,254 @@
-import { useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AnimatePresence, motion } from 'framer-motion'
+import { MessageCircle, Plus, Send, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import { api } from '../api/client'
+import {
+  consumePendingChatMessage,
+  createChatSession,
+  getActiveSessionId,
+  listChatSessions,
+  migrateLegacySession,
+  setActiveSessionId,
+  touchChatSession,
+  type ChatSessionMeta,
+} from '../lib/chatSessions'
+import { Button, GlassCard, Spinner } from '../components/ui'
 import { useFilters } from '../hooks/useFilters'
 import type { ChatMessage } from '../types'
 
 export function ChatPage() {
   const { t } = useTranslation()
   const { filters } = useFilters()
+  const queryClient = useQueryClient()
+  const location = useLocation()
+
+  const [sessions, setSessions] = useState<ChatSessionMeta[]>(() => {
+    migrateLegacySession()
+    return listChatSessions()
+  })
+  const [sessionId, setSessionId] = useState(() => {
+    migrateLegacySession()
+    return getActiveSessionId() ?? createChatSession().id
+  })
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [showAudit, setShowAudit] = useState<number | null>(null)
+  const pendingSendRef = useRef(false)
+  const refreshSessions = useCallback(() => setSessions(listChatSessions()), [])
+
+  const { data: historyData, isLoading: historyLoading } = useQuery({
+    queryKey: ['chat-history', sessionId],
+    queryFn: () => api.getChatHistory(sessionId),
+  })
 
   const chatMutation = useMutation({
     mutationFn: (msg: string) =>
-      api.chat(msg, {
+      api.chat(msg, sessionId, {
         season: filters.seasons[0] ?? 2024,
         position_group: filters.positionGroups[0] ?? 'CM_AM',
         age_max: filters.ageMax,
         minutes_min: filters.minutesMin,
       }),
-    onSuccess: (res, msg) => {
-      setMessages(prev => [
-        ...prev,
-        { role: 'user', content: msg },
-        { role: 'assistant', content: res.answer, audit: { plan: res.plan, ...res.audit } },
-      ])
+    onSuccess: (_, msg) => {
       setInput('')
+      touchChatSession(sessionId, msg.slice(0, 40))
+      refreshSessions()
+      queryClient.invalidateQueries({ queryKey: ['chat-history', sessionId] })
     },
   })
 
-  const handleSend = () => {
-    const trimmed = input.trim()
+  const feedbackMutation = useMutation({
+    mutationFn: ({ messageId, rating }: { messageId: string; rating: 'up' | 'down' }) =>
+      api.chatFeedback(sessionId, messageId, rating),
+    onSuccess: (_, { messageId, rating }) => {
+      setMessages(prev => prev.map(m => m.id === messageId ? { ...m, feedback: rating } : m))
+    },
+  })
+
+  useEffect(() => {
+    if (!historyData?.messages) return
+    if (pendingSendRef.current && chatMutation.isPending) return
+    pendingSendRef.current = false
+    setMessages(historyData.messages.map(m => ({
+      id: m.id,
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+      feedback: (m.feedback as 'up' | 'down') ?? null,
+    })))
+  }, [historyData, chatMutation.isPending])
+
+  const sendMessage = useCallback((text: string) => {
+    const trimmed = text.trim()
     if (!trimmed || chatMutation.isPending) return
+    setMessages(prev => [...prev, { role: 'user', content: trimmed }])
     chatMutation.mutate(trimmed)
+  }, [chatMutation])
+
+  useEffect(() => {
+    const state = location.state as { sessionId?: string; message?: string } | null
+    const pending = consumePendingChatMessage()
+
+    if (pending) {
+      setSessionId(pending.sessionId)
+      setActiveSessionId(pending.sessionId)
+      refreshSessions()
+      pendingSendRef.current = true
+      queueMicrotask(() => sendMessage(pending.message))
+      return
+    }
+
+    if (state?.sessionId) {
+      setSessionId(state.sessionId)
+      setActiveSessionId(state.sessionId)
+      refreshSessions()
+      if (state.message) {
+        const msg = state.message
+        pendingSendRef.current = true
+        queueMicrotask(() => sendMessage(msg))
+      }
+    }
+    // Only on mount / navigation with state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const selectSession = (id: string) => {
+    setSessionId(id)
+    setActiveSessionId(id)
+    setMessages([])
   }
 
+  const startNewSession = () => {
+    const s = createChatSession()
+    refreshSessions()
+    setSessionId(s.id)
+    setMessages([])
+    setInput('')
+  }
+
+  const handleSend = () => sendMessage(input)
+
   return (
-    <div className="space-y-4 flex flex-col h-[calc(100vh-6rem)]">
-      <h2 className="text-2xl font-bold">{t('chat')}</h2>
+    <div className="flex gap-4 h-[calc(100vh-8rem)] max-w-6xl mx-auto">
+      <aside className="w-56 shrink-0 glass rounded-xl flex flex-col overflow-hidden">
+        <div className="p-3 border-b border-white/10">
+          <h2 className="font-display font-bold text-lg flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-fut-emerald" />
+            {t('chat')}
+          </h2>
+        </div>
+        <div className="p-2">
+          <button
+            type="button"
+            onClick={startNewSession}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-fut-emerald/15 hover:bg-fut-emerald/25 text-fut-emerald border border-fut-emerald/30"
+          >
+            <Plus className="w-4 h-4" />
+            {t('new_chat')}
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {sessions.map(s => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => selectSession(s.id)}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${
+                s.id === sessionId
+                  ? 'bg-fut-gold/15 text-fut-gold border border-fut-gold/30'
+                  : 'hover:bg-white/5 text-white/70'
+              }`}
+            >
+              {s.title}
+            </button>
+          ))}
+          {!sessions.length && (
+            <p className="text-xs text-white/30 px-2 py-4">{t('chat_empty_sessions')}</p>
+          )}
+        </div>
+      </aside>
 
-      <div className="flex-1 card overflow-y-auto space-y-3 min-h-0">
-        {messages.length === 0 && (
-          <p className="text-text-muted text-sm">
-            Pergunte sobre jogadores, comparações, top rankings ou metodologia.
-          </p>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className={`p-3 rounded-lg ${m.role === 'user' ? 'bg-accent/20 ml-8' : 'bg-bg-elevated mr-8'}`}>
-            <p className="text-xs text-text-muted mb-1">{m.role === 'user' ? 'Você' : 'Scout Radar'}</p>
-            <p className="text-sm whitespace-pre-wrap">{m.content}</p>
-            {m.audit && (
-              <button className="text-xs text-accent mt-2" onClick={() => setShowAudit(showAudit === i ? null : i)}>
-                {t('audit')}
-              </button>
-            )}
-            {showAudit === i && m.audit && (
-              <pre className="text-xs mt-2 bg-bg-primary p-2 rounded overflow-x-auto">{JSON.stringify(m.audit, null, 2)}</pre>
-            )}
-          </div>
-        ))}
-        {chatMutation.isPending && <p className="text-text-muted text-sm">{t('loading')}</p>}
-      </div>
+      <GlassCard className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden p-0">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {historyLoading && messages.length === 0 && (
+            <div className="flex justify-center py-12"><Spinner /></div>
+          )}
+          {!historyLoading && messages.length === 0 && (
+            <p className="text-white/30 text-sm text-center py-12">{t('chat_placeholder')}</p>
+          )}
+          <AnimatePresence initial={false}>
+            {messages.map((m, i) => (
+              <motion.div
+                key={m.id ?? `msg-${i}`}
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                    m.role === 'user'
+                      ? 'bg-gradient-to-br from-fut-emerald/30 to-fut-emerald-dim/20 border border-fut-emerald/30'
+                      : 'glass border border-white/10'
+                  }`}
+                >
+                  <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1">
+                    {m.role === 'user' ? t('chat_you') : t('chat_assistant')}
+                  </p>
+                  <p className="text-sm whitespace-pre-wrap text-white/90">{m.content}</p>
+                  {m.role === 'assistant' && m.id && (
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        type="button"
+                        onClick={() => feedbackMutation.mutate({ messageId: m.id!, rating: 'up' })}
+                        className={`p-1.5 rounded-lg transition-colors ${m.feedback === 'up' ? 'bg-fut-emerald/30 text-fut-emerald' : 'hover:bg-white/10 text-white/40'}`}
+                      >
+                        <ThumbsUp className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => feedbackMutation.mutate({ messageId: m.id!, rating: 'down' })}
+                        className={`p-1.5 rounded-lg transition-colors ${m.feedback === 'down' ? 'bg-red-500/30 text-red-400' : 'hover:bg-white/10 text-white/40'}`}
+                      >
+                        <ThumbsDown className="w-4 h-4" />
+                      </button>
+                      {m.audit && (
+                        <button type="button" onClick={() => setShowAudit(showAudit === i ? null : i)} className="text-xs text-fut-gold ml-auto">
+                          {t('audit')}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {showAudit === i && m.audit && (
+                    <pre className="text-[10px] mt-2 p-2 rounded bg-black/40 overflow-x-auto text-white/50">{JSON.stringify(m.audit, null, 2)}</pre>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          {chatMutation.isPending && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2 items-center text-white/40 text-sm">
+              <Spinner className="w-5 h-5" />
+              {t('chat_thinking')}
+            </motion.div>
+          )}
+        </div>
 
-      <div className="flex gap-2">
-        <input
-          className="input flex-1"
-          placeholder="Ex: compare jogador 1 com jogador 2"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSend()}
-        />
-        <button className="btn-primary" onClick={handleSend} disabled={chatMutation.isPending}>
-          {t('send')}
-        </button>
-      </div>
+        <div className="p-4 border-t border-white/10 flex gap-2">
+          <input
+            className="flex-1 glass rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-fut-gold/50"
+            placeholder={t('chat_input_placeholder')}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+          />
+          <Button variant="gold" onClick={handleSend} disabled={chatMutation.isPending}>
+            <Send className="w-4 h-4" />
+            {t('send')}
+          </Button>
+        </div>
+      </GlassCard>
     </div>
   )
 }

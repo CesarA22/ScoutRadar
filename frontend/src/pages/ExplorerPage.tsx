@@ -1,9 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import { Map, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
-import { PlayerCard } from '../components/PlayerCard'
+import { ExplorerCharts } from '../components/ExplorerCharts'
+import { PlayerCardModal } from '../components/PlayerCardModal'
 import { ScatterMap } from '../components/ScatterMap'
+import { Button, CountUp, GlassCard, Spinner } from '../components/ui'
 import { useFilters } from '../hooks/useFilters'
 import type { Player } from '../types'
 
@@ -33,45 +37,54 @@ export function ExplorerPage() {
     onSuccess: res => setInsight(res.text),
   })
 
-  const playerInsightMutation = useMutation({
-    mutationFn: (key: string) => api.playerInsight(key, i18n.language),
-    onSuccess: res => setInsight(res.text),
-  })
-
-  if (isLoading) return <p className="text-text-secondary">{t('loading')}</p>
-
   const players = data?.items ?? []
-  if (!players.length) return <p className="text-text-secondary">{t('no_players')}</p>
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <Spinner />
+        <p className="text-white/40 text-sm">{t('loading')}</p>
+      </div>
+    )
+  }
+
+  if (!players.length) {
+    return (
+      <GlassCard className="text-center py-16">
+        <Map className="w-12 h-12 text-white/20 mx-auto mb-4" />
+        <p className="text-white/50">{t('no_players')}</p>
+      </GlassCard>
+    )
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="flex flex-wrap justify-between items-end gap-4">
         <div>
-          <h2 className="text-2xl font-bold">{t('explorer')}</h2>
-          <p className="text-text-secondary text-sm">{players.length} {t('players_shown')}. {t('click_hint')}</p>
+          <h2 className="font-display text-3xl font-bold text-white">{t('explorer')}</h2>
+          <p className="text-white/40 text-sm mt-1">
+            <CountUp value={players.length} className="text-fut-emerald font-stats font-bold" /> {t('players_shown')}
+          </p>
         </div>
-        <button className="btn-primary" onClick={() => insightMutation.mutate()} disabled={insightMutation.isPending}>
-          {insightMutation.isPending ? t('loading') : t('ai_insights')}
-        </button>
+        <Button variant="gold" loading={insightMutation.isPending} onClick={() => insightMutation.mutate()}>
+          <Sparkles className="w-4 h-4" />
+          {t('ai_insights')}
+        </Button>
       </div>
 
-      {insight && !selected && (
-        <div className="card text-sm whitespace-pre-wrap">{insight}</div>
+      <ExplorerCharts players={players} />
+
+      {insight && (
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+          <GlassCard className="border border-fut-gold/20 text-sm text-white/80 whitespace-pre-wrap">{insight}</GlassCard>
+        </motion.div>
       )}
 
-      <div className="card h-[500px]">
+      <GlassCard className="h-[520px] p-2 gradient-border">
         <ScatterMap players={players} onSelect={setSelected} selectedKey={selected?.player_key} />
-      </div>
+      </GlassCard>
 
-      {selected && (
-        <PlayerCard
-          player={selected}
-          onClose={() => { setSelected(null); setInsight('') }}
-          onInsight={() => playerInsightMutation.mutate(selected.player_key)}
-          insight={insight}
-          loadingInsight={playerInsightMutation.isPending}
-        />
-      )}
+      <PlayerCardModal player={selected} allPlayers={players} onClose={() => setSelected(null)} />
     </div>
   )
 }

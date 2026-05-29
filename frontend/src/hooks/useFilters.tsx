@@ -5,6 +5,7 @@ interface FilterContextValue {
   filters: FilterState
   setFilters: (f: FilterState) => void
   updateFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void
+  resetFilters: () => void
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null)
@@ -16,8 +17,10 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
 
+  const resetFilters = () => setFilters({ ...DEFAULT_FILTERS })
+
   return (
-    <FilterContext.Provider value={{ filters, setFilters, updateFilter }}>
+    <FilterContext.Provider value={{ filters, setFilters, updateFilter, resetFilters }}>
       {children}
     </FilterContext.Provider>
   )

@@ -4,33 +4,83 @@
 
 :root {
   color-scheme: dark;
+  --gold: #f4cf6b;
+  --gold-dark: #c9a23a;
+  --emerald: #10d979;
+  --glass-bg: rgba(18, 26, 43, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(244, 207, 107, 0.35) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(244, 207, 107, 0.35);
+  border-radius: 3px;
 }
 
 body {
-  @apply bg-bg-primary text-text-primary min-h-screen;
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  @apply bg-fut-bg text-white min-h-screen antialiased;
+  font-family: Inter, system-ui, sans-serif;
 }
 
 #root {
   min-height: 100vh;
 }
 
-.card {
-  @apply bg-bg-card border border-border rounded-lg p-4 shadow-lg;
+.fut-bg {
+  @apply bg-fut-bg bg-fut-radial min-h-screen;
 }
 
-.btn-primary {
-  @apply bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg font-medium transition-colors;
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
 }
 
-.btn-secondary {
-  @apply bg-bg-elevated hover:bg-bg-card border border-border text-text-primary px-4 py-2 rounded-lg transition-colors;
+.glass-strong {
+  background: rgba(13, 19, 32, 0.92);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.input {
-  @apply bg-bg-secondary border border-border rounded-lg px-3 py-2 text-text-primary w-full focus:outline-none focus:border-accent;
+.gradient-border {
+  position: relative;
 }
 
-.select {
-  @apply bg-bg-secondary border border-border rounded-lg px-3 py-2 text-text-primary w-full;
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--gold), var(--emerald), var(--gold-dark));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.font-display {
+  font-family: 'Saira Condensed', 'Rajdhani', sans-serif;
+}
+
+select.fut-select,
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #0d1320;
+  color: #f0f4f8;
+  padding: 8px;
 }

@@ -1,70 +1,123 @@
 import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import { TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
+import { PlayerCardModal } from '../components/PlayerCardModal'
+import { PlayerFifaCard } from '../components/PlayerFifaCard'
+import { GlassCard, Select, Spinner } from '../components/ui'
 import { useFilters } from '../hooks/useFilters'
+import type { Player } from '../types'
 
 const METRICS = ['prospect_score', 'rarity_score', 'impact_score', 'xg_per90', 'xa_per90']
-
-function formatMetric(p: import('../types').Player, metric: string): string {
-  const record = p as unknown as Record<string, unknown>
-  const val = record[metric] ?? p.metrics?.[metric]
-  return typeof val === 'number' ? val.toFixed(3) : '-'
-}
 
 export function OutliersPage() {
   const { t } = useTranslation()
   const { filters } = useFilters()
   const [metric, setMetric] = useState('prospect_score')
+  const [selected, setSelected] = useState<Player | null>(null)
+
+  const { data: allPlayers } = useQuery({
+    queryKey: ['players', filters],
+    queryFn: () => api.getPlayers(filters),
+  })
 
   const { data, isLoading } = useQuery({
     queryKey: ['outliers', filters, metric],
     queryFn: () => api.getOutliers(filters, metric, 25),
   })
 
-  if (isLoading) return <p className="text-text-secondary">{t('loading')}</p>
+  const pool = allPlayers?.items ?? []
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <Spinner />
+        <p className="text-white/40 text-sm">{t('loading')}</p>
+      </div>
+    )
+  }
 
   const items = data ?? []
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('outliers')}</h2>
-        <select className="select w-48" value={metric} onChange={e => setMetric(e.target.value)}>
-          {METRICS.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
+    <div className="space-y-6">
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <h2 className="font-display text-3xl font-bold flex items-center gap-2">
+            <TrendingUp className="w-8 h-8 text-fut-gold" />
+            {t('outliers')}
+          </h2>
+          <p className="text-white/40 text-sm mt-1">Top prospects — clique na carta para detalhes</p>
+        </div>
+        <Select label={t('metric')} value={metric} onChange={e => setMetric(e.target.value)} className="w-48">
+          {METRICS.map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </Select>
       </div>
 
       {!items.length ? (
-        <p className="text-text-secondary">{t('no_players')}</p>
+        <GlassCard className="text-center py-16 text-white/50">{t('no_players')}</GlassCard>
       ) : (
-        <div className="card overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-text-secondary border-b border-border">
-                <th className="text-left py-2 px-3">#</th>
-                <th className="text-left py-2 px-3">Jogador</th>
-                <th className="text-left py-2 px-3">Time</th>
-                <th className="text-left py-2 px-3">Pos</th>
-                <th className="text-right py-2 px-3">{metric}</th>
-                <th className="text-right py-2 px-3">Prospect</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((p, i) => (
-                <tr key={p.player_key} className="border-b border-border-subtle hover:bg-bg-elevated">
-                  <td className="py-2 px-3 text-text-muted">{i + 1}</td>
-                  <td className="py-2 px-3 font-medium">{p.player}</td>
-                  <td className="py-2 px-3">{p.team}</td>
-                  <td className="py-2 px-3">{p.position_group}</td>
-                  <td className="py-2 px-3 text-right">{formatMetric(p, metric)}</td>
-                  <td className="py-2 px-3 text-right text-accent">{p.prospect_score?.toFixed(3)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+          {items.map((p, i) => (
+            <PlayerFifaCard
+              key={p.player_key}
+              player={p}
+              allPlayers={pool}
+              size="mini"
+              index={i}
+              onClick={() => setSelected(p)}
+            />
+          ))}
         </div>
       )}
+
+      <GlassCard className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-white/40 border-b border-white/10 text-left">
+              <th className="py-3 px-3">#</th>
+              <th className="py-3 px-3">Jogador</th>
+              <th className="py-3 px-3">Time</th>
+              <th className="py-3 px-3">Pos</th>
+              <th className="py-3 px-3 text-right">{metric}</th>
+              <th className="py-3 px-3 text-right">Prospect</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((p, i) => (
+              <motion.tr
+                key={p.player_key}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.02 }}
+                className="border-b border-white/5 hover:bg-white/5 cursor-pointer"
+                onClick={() => setSelected(p)}
+              >
+                <td className="py-2 px-3 text-white/30 font-stats">{i + 1}</td>
+                <td className="py-2 px-3 font-medium">{p.player}</td>
+                <td className="py-2 px-3 text-white/60">{p.team}</td>
+                <td className="py-2 px-3">{p.position_group}</td>
+                <td className="py-2 px-3 text-right font-stats text-fut-gold">
+                  {formatMetric(p, metric)}
+                </td>
+                <td className="py-2 px-3 text-right font-stats text-fut-emerald">{p.prospect_score?.toFixed(3)}</td>
+              </motion.tr>
+            ))}
+          </tbody>
+        </table>
+      </GlassCard>
+
+      <PlayerCardModal player={selected} allPlayers={pool} onClose={() => setSelected(null)} />
     </div>
   )
+}
+
+function formatMetric(p: Player, metric: string): string {
+  const record = p as unknown as Record<string, unknown>
+  const val = record[metric] ?? p.metrics?.[metric]
+  return typeof val === 'number' ? val.toFixed(3) : '—'
 }

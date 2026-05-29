@@ -64,16 +64,39 @@ class MetricInfo(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+    session_id: str = ""
     context: dict[str, Any] = Field(default_factory=dict)
 
 
 class ChatResponse(BaseModel):
+    session_id: str
+    message_id: str
     answer: str
     plan: dict[str, Any]
     evidence: dict[str, Any]
     tools_called: list[str]
     postcheck_ok: bool
     audit: dict[str, Any]
+
+
+class ChatHistoryMessage(BaseModel):
+    id: str
+    role: str
+    content: str
+    timestamp: str
+    feedback: Optional[str] = None
+
+
+class ChatHistoryResponse(BaseModel):
+    session_id: str
+    messages: list[ChatHistoryMessage]
+
+
+class ChatFeedbackRequest(BaseModel):
+    session_id: str
+    message_id: str
+    rating: str  # up | down
+    comment: str = ""
 
 
 class ExplorerInsightRequest(BaseModel):

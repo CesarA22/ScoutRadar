@@ -43,6 +43,9 @@ class Settings(BaseSettings):
             return url.replace("postgresql://", "postgresql+psycopg://", 1)
         return url
     openai_api_key: str = ""
+    redis_url: str = "redis://localhost:6379/0"
+    chat_history_limit: int = 20
+    chat_session_ttl_seconds: int = 60 * 60 * 24 * 7  # 7 days
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     env: str = "development"
     data_processed_dir: str = str(REPO_ROOT / "data" / "processed")

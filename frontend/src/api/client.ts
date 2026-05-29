@@ -1,6 +1,7 @@
 import type { FilterState, Player } from '../types'
 
-const BASE = ''
+/** Empty in local dev (Vite proxy). Set VITE_API_URL on Railway to the backend public URL. */
+const BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
 
 function buildParams(filters: Partial<FilterState>, extra: Record<string, string | number | undefined> = {}) {
   const params = new URLSearchParams()
@@ -40,11 +41,23 @@ export const api = {
 
   getDatasetStatus: () => fetchJson<{ active: boolean; source?: string; row_count: number; seasons: number[] }>(`${BASE}/api/v1/dataset/status`),
 
-  chat: (message: string, context: Record<string, unknown>) =>
-    fetchJson<{ answer: string; plan: Record<string, unknown>; audit: Record<string, unknown> }>(`${BASE}/api/v1/chat`, {
+  chat: (message: string, sessionId: string, context: Record<string, unknown>) =>
+    fetchJson<{ session_id: string; message_id: string; answer: string; plan: Record<string, unknown>; audit: Record<string, unknown> }>(`${BASE}/api/v1/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, context }),
+      body: JSON.stringify({ message, session_id: sessionId, context }),
+    }),
+
+  getChatHistory: (sessionId: string) =>
+    fetchJson<{ session_id: string; messages: Array<{ id: string; role: string; content: string; timestamp: string; feedback?: string }> }>(
+      `${BASE}/api/v1/chat/history/${encodeURIComponent(sessionId)}`
+    ),
+
+  chatFeedback: (sessionId: string, messageId: string, rating: 'up' | 'down') =>
+    fetchJson<{ ok: boolean }>(`${BASE}/api/v1/chat/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, message_id: messageId, rating }),
     }),
 
   explorerInsight: (payload: Record<string, string>) =>

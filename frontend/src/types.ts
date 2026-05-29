@@ -45,7 +45,9 @@ export const DEFAULT_FILTERS: FilterState = {
 }
 
 export interface ChatMessage {
+  id?: string
   role: 'user' | 'assistant'
   content: string
   audit?: Record<string, unknown>
+  feedback?: 'up' | 'down' | null
 }
