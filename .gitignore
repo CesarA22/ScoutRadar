@@ -6,7 +6,11 @@ __pycache__/
 venv/
 .streamlit/
 
-# Dados - não versionar (use DATA_MODE=build ou download)
+# Node
+node_modules/
+frontend/dist/
+
+# Dados - não versionar
 data/raw/
 data/cache/
 data/processed/

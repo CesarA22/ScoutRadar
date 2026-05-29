@@ -1,0 +1,1 @@
+"""ScoutRadar backend application."""

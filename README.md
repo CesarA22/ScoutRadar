@@ -1,94 +1,128 @@
 # Scout Radar
 
-App Streamlit com **Visualizer** (UMAP, clusters, outliers, comparação) e **Chatbot grounded** com guardrails para análise de jogadores do Campeonato Brasileiro Série A (2023/2024).
+Plataforma de scouting U-23 do Brasileirão com visualização interativa (UMAP), outliers, comparação e chatbot grounded com guardrails.
 
-## Features
+**Stack:** React + FastAPI + PostgreSQL + Docker
 
-- **Metric Registry** - tooltips em tabelas e gráficos explicando cada métrica
-- **Fotos dos jogadores** - via Wikidata (P18) → Wikimedia Commons, com cache e fallback silhueta
-- **Identidade correta** - `player` real em master/umap/outliers (sem jogador_i)
-- **UI moderna** - tema dark, cards, Auditoria legível
+---
 
-## Setup
+## Arquitetura
+
+```
+React SPA  →  FastAPI REST API  →  PostgreSQL
+                    ↓
+              OpenAI (chat + insights)
+
+Ingestão offline (CLI): FBref/sample → Postgres
+```
+
+Os dados dos jogadores ficam **persistidos no PostgreSQL**. A API só lê do banco — deploy/restart não reprocessa FBref.
+
+---
+
+## Setup (Docker — recomendado)
 
 ```bash
-pip install -r requirements.txt
 cp .env.example .env
-# Edite .env: OPENAI_API_KEY e opcionalmente DATA_MODE, DATA_BUNDLE_URL
+# Edite OPENAI_API_KEY se quiser chat/insights IA
+
+docker compose up -d
+docker compose exec backend alembic upgrade head
+docker compose exec backend python -m app.pipeline --sample
 ```
 
-### DATA_MODE
+Acesse:
+- **Frontend:** http://localhost:5173
+- **API:** http://localhost:8000
+- **Health:** http://localhost:8000/health
+- **Docs:** http://localhost:8000/docs
 
-- **local** (default): usa `data/processed/` existente. Rode `python scripts/generate_sample_data.py` antes.
-- **download**: baixa bundle do `DATA_BUNDLE_URL` na primeira execução.
-- **build**: roda pipeline automaticamente (gera sample data).
+---
 
-## Dados
-
-Coloque os parquets em `data/processed/`:
-
-- `master.parquet` - identidade (player, team, season, position_group, minutes, age)
-- `features.parquet` - métricas per90, z-scores
-- `umap_clusters.parquet` - player, team, season, umap_x/y, cluster_id
-- `outliers.parquet` - player, team, season, prospect_score
-- `player_cards.jsonl` - cards textuais (opcional)
-- `player_images.parquet` - fotos (opcional, gerado por script)
-
-**Pipeline (dados reais do FBref):**
-```bash
-pip install soccerdata
-python scripts/run_pipeline.py --seasons 2023 2024
-```
-
-**Dados de exemplo (fallback):**
-```bash
-python scripts/generate_sample_data.py
-```
-
-Para buscar fotos via Wikidata/Commons (requer internet):
+## Ingestão de dados
 
 ```bash
-python scripts/fetch_player_images.py
+# Dados sintéticos (dev)
+docker compose exec backend python -m app.pipeline --sample
+
+# Dados reais FBref (requer internet + soccerdata)
+docker compose exec backend python -m app.pipeline --seasons 2023 2024
+
+# Migrar parquets legados de data/processed/
+docker compose exec backend python scripts/migrate_parquet.py
 ```
 
-## Executar
+---
+
+## Desenvolvimento local (sem Docker)
+
+### Backend
 
 ```bash
-streamlit run app.py
+cd backend
+pip install -e ".[dev]"
+# Postgres rodando localmente
+export DATABASE_URL=postgresql+psycopg://scout:scout@localhost:5432/scoutradar
+alembic upgrade head
+python -m app.pipeline --sample
+uvicorn app.main:app --reload
 ```
 
-## Testes de segurança
+### Frontend
 
 ```bash
-python -m pytest tests/test_prompt_injection.py -v
+cd frontend
+npm install
+npm run dev
 ```
 
-## Publicar dados (GitHub Release / bucket)
+---
+
+## Testes
 
 ```bash
-python scripts/generate_sample_data.py
-python scripts/create_bundle.py
-# Upload data/processed_bundle.zip como Release asset ou em bucket
+cd backend
+pytest tests/ -v
 ```
 
-Configure `DATA_BUNDLE_URL` com a URL direta do zip (ex: GitHub Release asset).
+---
 
-### Buckets gratuitos
+## Deploy Railway
 
-| Opção | Free tier | Notas |
-|-------|-----------|-------|
-| **GitHub Releases** | 2GB/asset | Simples, ideal para portfólio |
-| **Cloudflare R2** | 10GB/mês | Zero egress, precisa conta |
-| **Hugging Face** | Ilimitado (datasets públicos) | Versionado, viralização |
-| **Backblaze B2** | 10GB | Parceria com Cloudflare (egress free) |
-| **Google Cloud Storage** | 5GB/mês | 12 meses free |
+1. Crie um projeto Railway com **PostgreSQL plugin**
+2. **Backend service:** root directory `backend/`, Dockerfile auto-detectado
+   - Variáveis: `OPENAI_API_KEY`, `CORS_ORIGINS` (URL do frontend)
+   - `DATABASE_URL` é injetada automaticamente pelo plugin Postgres
+3. **Frontend service:** root directory `frontend/`, use `Dockerfile.prod`
+   - Configure `VITE_API_URL` com a URL pública do backend
+4. (Opcional) Cron job semanal: `python -m app.pipeline --seasons 2023 2024`
 
-Para começar: **GitHub Releases** (sem conta extra).
+---
 
-## Arquitetura do Chatbot
+## API Endpoints
 
-1. **Policy Gate** (determinístico) - bloqueia prompt injection e fora do escopo
-2. **Router/Planner** (LLM + Structured Outputs) - decide intent, filtros, entidades
-3. **Tools** (DuckDB/pandas) - executa queries no dataset local
-4. **Answer Writer** (LLM) - redige resposta com evidências
-5. **Post-check** - garante "Fontes (dataset)" e métricas no escopo
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/v1/players` | Lista jogadores com filtros |
+| `GET /api/v1/players/{key}` | Detalhe do jogador |
+| `GET /api/v1/players/search?q=` | Busca fuzzy |
+| `GET /api/v1/players/compare?keys=` | Comparação |
+| `GET /api/v1/outliers` | Top outliers |
+| `GET /api/v1/filters` | Opções de filtro |
+| `GET /api/v1/dataset/status` | Status do dataset |
+| `POST /api/v1/chat` | Chat grounded |
+| `POST /api/v1/insights/explorer` | Insights IA do explorer |
+| `POST /api/v1/insights/player/{key}` | Insight de jogador |
+
+---
+
+## Estrutura do monorepo
+
+```
+ScoutRadar/
+├── backend/          # FastAPI + SQLAlchemy + Alembic + pipeline
+├── frontend/         # React + Vite + Tailwind + Plotly
+├── docker-compose.yml
+├── docker-compose.prod.yml
+└── .env.example
+```

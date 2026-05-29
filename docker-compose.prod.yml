@@ -1,0 +1,24 @@
+# Production reference for Railway deployment
+# Backend: set root to backend/, use backend/Dockerfile
+# Frontend: build frontend/Dockerfile, serve static on port 80
+# PostgreSQL: Railway plugin -> DATABASE_URL injected automatically
+
+services:
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      ENV: production
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
