@@ -1,23 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
-import { MessageCircle, Plus, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react'
+import { MessageCircle, Plus, Send, ThumbsDown, ThumbsUp, Archive, ArchiveRestore, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import {
+  archiveChatSession,
   consumePendingChatMessage,
   createChatSession,
+  deleteChatSession,
   getActiveSessionId,
   getSessionPlayerContext,
+  listArchivedChatSessions,
   listChatSessions,
   migrateLegacySession,
   setActiveSessionId,
   setSessionPlayerContext,
   touchChatSession,
+  unarchiveChatSession,
   type ChatSessionMeta,
   type PlayerChatContext,
 } from '../lib/chatSessions'
+import { sanitizeChatContent } from '../lib/sanitizeChat'
 import { Button, GlassCard, Spinner } from '../components/ui'
 import { useFilters } from '../hooks/useFilters'
 import type { ChatMessage } from '../types'
@@ -33,6 +38,8 @@ export function ChatPage() {
     migrateLegacySession()
     return listChatSessions()
   })
+  const [archivedSessions, setArchivedSessions] = useState<ChatSessionMeta[]>(() => listArchivedChatSessions())
+  const [showArchived, setShowArchived] = useState(false)
   const [sessionId, setSessionId] = useState(() => {
     migrateLegacySession()
     return getActiveSessionId() ?? createChatSession().id
@@ -51,7 +58,10 @@ export function ChatPage() {
   const pendingSendRef = useRef(false)
   const handledNavKeyRef = useRef<string | null>(null)
 
-  const refreshSessions = useCallback(() => setSessions(listChatSessions()), [])
+  const refreshSessions = useCallback(() => {
+    setSessions(listChatSessions())
+    setArchivedSessions(listArchivedChatSessions())
+  }, [])
 
   const buildChatContext = useCallback(() => {
     const ctx = playerContextRef.current
@@ -102,7 +112,7 @@ export function ChatPage() {
     setMessages(historyData.messages.map(m => ({
       id: m.id,
       role: m.role as 'user' | 'assistant',
-      content: m.content,
+      content: m.role === 'assistant' ? sanitizeChatContent(m.content) : m.content,
       feedback: (m.feedback as 'up' | 'down') ?? null,
     })))
   }, [historyData, chatMutation.isPending])
@@ -183,7 +193,82 @@ export function ChatPage() {
     setSessionPlayerContext(sessionId, null)
   }
 
+  const handleArchive = (id: string) => {
+    archiveChatSession(id)
+    refreshSessions()
+    if (sessionId === id) {
+      const next = listChatSessions()[0]
+      if (next) selectSession(next.id)
+      else startNewSession()
+    }
+  }
+
+  const handleUnarchive = (id: string) => {
+    unarchiveChatSession(id)
+    refreshSessions()
+  }
+
+  const handleDelete = (id: string) => {
+    deleteChatSession(id)
+    refreshSessions()
+    if (sessionId === id) {
+      const next = listChatSessions()[0]
+      if (next) selectSession(next.id)
+      else {
+        const s = createChatSession()
+        setSessionId(s.id)
+        setMessages([])
+        setPlayerContext(null)
+      }
+    }
+  }
+
   const handleSend = () => sendMessage(input)
+
+  const renderSessionRow = (s: ChatSessionMeta, archived: boolean) => (
+    <div key={s.id} className="group relative flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => selectSession(s.id)}
+        className={`flex-1 min-w-0 text-left px-3 py-2 pr-14 rounded-lg text-sm truncate transition-colors ${
+          s.id === sessionId
+            ? 'bg-fut-gold/15 text-fut-gold border border-fut-gold/30'
+            : 'hover:bg-white/5 text-white/70'
+        }`}
+      >
+        {s.title}
+      </button>
+      <div className="absolute right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {archived ? (
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); handleUnarchive(s.id) }}
+            className="p-1.5 rounded hover:bg-white/10 text-white/50 hover:text-fut-emerald"
+            title={t('chat_unarchive')}
+          >
+            <ArchiveRestore className="w-3.5 h-3.5" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); handleArchive(s.id) }}
+            className="p-1.5 rounded hover:bg-white/10 text-white/50 hover:text-fut-gold"
+            title={t('chat_archive')}
+          >
+            <Archive className="w-3.5 h-3.5" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={e => { e.stopPropagation(); handleDelete(s.id) }}
+          className="p-1.5 rounded hover:bg-white/10 text-white/50 hover:text-red-400"
+          title={t('chat_delete')}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  )
 
   return (
     <div className="flex gap-4 h-[calc(100vh-8rem)] max-w-6xl mx-auto">
@@ -205,22 +290,21 @@ export function ChatPage() {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {sessions.map(s => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => selectSession(s.id)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${
-                s.id === sessionId
-                  ? 'bg-fut-gold/15 text-fut-gold border border-fut-gold/30'
-                  : 'hover:bg-white/5 text-white/70'
-              }`}
-            >
-              {s.title}
-            </button>
-          ))}
-          {!sessions.length && (
+          {sessions.map(s => renderSessionRow(s, false))}
+          {!sessions.length && !showArchived && (
             <p className="text-xs text-white/30 px-2 py-4">{t('chat_empty_sessions')}</p>
+          )}
+          {archivedSessions.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowArchived(v => !v)}
+                className="w-full text-left px-3 py-2 text-xs text-white/40 hover:text-white/60 uppercase tracking-wider"
+              >
+                {showArchived ? t('chat_hide_archived') : t('chat_show_archived', { count: archivedSessions.length })}
+              </button>
+              {showArchived && archivedSessions.map(s => renderSessionRow(s, true))}
+            </>
           )}
         </div>
       </aside>

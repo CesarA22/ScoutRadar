@@ -10,6 +10,7 @@ export interface ChatSessionMeta {
   title: string
   updatedAt: string
   player?: PlayerChatContext
+  archived?: boolean
 }
 
 export interface PendingChatPayload {
@@ -31,14 +32,23 @@ function saveSessions(list: ChatSessionMeta[]) {
   localStorage.setItem(SESSIONS_KEY, JSON.stringify(list.slice(0, 50)))
 }
 
-export function listChatSessions(): ChatSessionMeta[] {
+function allSessionsRaw(): ChatSessionMeta[] {
   try {
     const raw = localStorage.getItem(SESSIONS_KEY)
-    const list = raw ? (JSON.parse(raw) as ChatSessionMeta[]) : []
-    return list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    return raw ? (JSON.parse(raw) as ChatSessionMeta[]) : []
   } catch {
     return []
   }
+}
+
+export function listChatSessions(includeArchived = false): ChatSessionMeta[] {
+  return allSessionsRaw()
+    .filter(s => (includeArchived ? s.archived : !s.archived))
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+}
+
+export function listArchivedChatSessions(): ChatSessionMeta[] {
+  return listChatSessions(true)
 }
 
 export function getActiveSessionId(): string | null {
@@ -56,7 +66,7 @@ export function createChatSession(title = 'Nova conversa', player?: PlayerChatCo
     updatedAt: new Date().toISOString(),
     player,
   }
-  const list = listChatSessions()
+  const list = allSessionsRaw()
   list.unshift(session)
   saveSessions(list)
   setActiveSessionId(session.id)
@@ -65,7 +75,7 @@ export function createChatSession(title = 'Nova conversa', player?: PlayerChatCo
 }
 
 export function touchChatSession(id: string, title?: string) {
-  const list = listChatSessions()
+  const list = allSessionsRaw()
   const idx = list.findIndex(s => s.id === id)
   const prev = idx >= 0 ? list[idx] : null
   const entry: ChatSessionMeta = {
@@ -73,16 +83,44 @@ export function touchChatSession(id: string, title?: string) {
     title: title ?? prev?.title ?? 'Conversa',
     updatedAt: new Date().toISOString(),
     player: prev?.player,
+    archived: prev?.archived,
   }
   if (idx >= 0) list[idx] = entry
   else list.unshift(entry)
   saveSessions(list)
 }
 
+export function archiveChatSession(id: string) {
+  const list = allSessionsRaw()
+  const idx = list.findIndex(s => s.id === id)
+  if (idx < 0) return
+  list[idx] = { ...list[idx], archived: true, updatedAt: new Date().toISOString() }
+  saveSessions(list)
+}
+
+export function unarchiveChatSession(id: string) {
+  const list = allSessionsRaw()
+  const idx = list.findIndex(s => s.id === id)
+  if (idx < 0) return
+  list[idx] = { ...list[idx], archived: false, updatedAt: new Date().toISOString() }
+  saveSessions(list)
+}
+
+export function deleteChatSession(id: string) {
+  const list = allSessionsRaw().filter(s => s.id !== id)
+  saveSessions(list)
+  sessionStorage.removeItem(`${PLAYER_CTX_PREFIX}${id}`)
+  if (getActiveSessionId() === id) {
+    const next = list.find(s => !s.archived) ?? list[0]
+    if (next) setActiveSessionId(next.id)
+    else localStorage.removeItem(ACTIVE_KEY)
+  }
+}
+
 /** One chat thread per player — reopens existing or creates a new session titled with the player name. */
 export function getOrCreatePlayerSession(player: PlayerChatContext): ChatSessionMeta {
-  const list = listChatSessions()
-  const existing = list.find(s => s.player?.player_key === player.player_key)
+  const list = allSessionsRaw()
+  const existing = list.find(s => s.player?.player_key === player.player_key && !s.archived)
   if (existing) {
     const updated: ChatSessionMeta = {
       ...existing,
@@ -106,7 +144,7 @@ const LEGACY_SESSION_KEY = 'scoutradar_chat_session'
 export function migrateLegacySession() {
   const legacy = localStorage.getItem(LEGACY_SESSION_KEY)
   if (!legacy) return
-  if (!listChatSessions().some(s => s.id === legacy)) {
+  if (!listChatSessions(true).some(s => s.id === legacy)) {
     touchChatSession(legacy, 'Conversa')
   }
   setActiveSessionId(legacy)
@@ -127,7 +165,7 @@ export function setSessionPlayerContext(sessionId: string, player: PlayerChatCon
   if (player) sessionStorage.setItem(key, JSON.stringify(player))
   else sessionStorage.removeItem(key)
 
-  const list = listChatSessions()
+  const list = allSessionsRaw()
   const idx = list.findIndex(s => s.id === sessionId)
   if (idx >= 0) {
     list[idx] = { ...list[idx], player: player ?? undefined }
@@ -142,7 +180,7 @@ export function getSessionPlayerContext(sessionId: string): PlayerChatContext | 
   } catch {
     /* fall through */
   }
-  const meta = listChatSessions().find(s => s.id === sessionId)
+  const meta = allSessionsRaw().find(s => s.id === sessionId)
   return meta?.player ?? null
 }
 

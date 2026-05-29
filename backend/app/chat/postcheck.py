@@ -8,8 +8,6 @@ from app.config import METRICS_ALLOWLIST, SEASONS_ALLOWED
 def check_response(text: str) -> Tuple[bool, str]:
     if not text or not isinstance(text, str):
         return False, "Resposta vazia."
-    if "Fontes (dataset)" not in text and "fontes" not in text.lower():
-        return False, "Falta bloco 'Fontes (dataset)'."
     year_match = re.findall(r"\b(19\d{2}|20[0-1]\d|202[5-9])\b", text)
     for y in year_match:
         yr = int(y)

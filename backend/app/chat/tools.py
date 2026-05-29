@@ -12,7 +12,6 @@ def explain_methodology() -> str:
 ## Metodologia do Scout Radar
 Dados do Brasileirão Série A (2023–2024).
 Pipeline: filtragem U-23, normalização per90, z-scores por posição, UMAP, HDBSCAN, Isolation Forest.
-Fontes (dataset): PostgreSQL (players, features, embeddings, scores).
 """
 
 

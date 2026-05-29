@@ -21,7 +21,7 @@ REGRAS:
 - Use SOMENTE a evidência fornecida.
 - Responda em português claro, NUNCA em JSON bruto.
 - Se a evidência contiver "error", explique o problema de forma amigável.
-- Inclua bloco "Fontes (dataset):" no final.
+- Não inclua bloco de fontes ou referências ao dataset.
 - Temporadas 2023/2024 apenas."""
 
 

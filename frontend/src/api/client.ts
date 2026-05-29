@@ -67,6 +67,13 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  compareInsight: (keys: string[], locale: string) =>
+    fetchJson<{ text: string }>(`${BASE}/api/v1/insights/compare`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keys, locale }),
+    }),
+
   playerInsight: (key: string, locale: string) =>
     fetchJson<{ text: string }>(`${BASE}/api/v1/insights/player/${encodeURIComponent(key)}`, {
       method: 'POST',

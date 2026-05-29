@@ -9,6 +9,7 @@ from app.schemas.players import (
     ChatRequest,
     ChatResponse,
     ExplorerInsightRequest,
+    CompareInsightRequest,
     InsightResponse,
     PlayerInsightRequest,
 )
@@ -55,6 +56,20 @@ def explorer_insights(body: ExplorerInsightRequest, db: Session = Depends(get_db
         body.top_prospects = ", ".join(f"{i['player']} ({i.get('prospect_score', 0):.2f})" for i in items[:10])
     text = insights_service.generate_explorer_insights(
         body.top_prospects, body.by_team, body.by_position, body.filter_desc, body.locale
+    )
+    return InsightResponse(text=text)
+
+
+@router.post("/insights/compare", response_model=InsightResponse)
+def compare_insight(body: CompareInsightRequest, db: Session = Depends(get_db)):
+    result = ps.compare_players(db, body.keys[0], body.keys[1])
+    if result.get("error"):
+        return InsightResponse(text=str(result["error"]))
+    text = insights_service.generate_compare_insight(
+        result["player_a"],
+        result["player_b"],
+        result.get("metrics", {}),
+        body.locale,
     )
     return InsightResponse(text=text)
 

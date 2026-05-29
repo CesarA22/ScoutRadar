@@ -1,28 +1,33 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Swords } from 'lucide-react'
+import { Sparkles, Swords } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
 import { PlayerFifaCard } from '../components/PlayerFifaCard'
 import { Button, GlassCard, Select, Spinner } from '../components/ui'
+import { InsightLoading } from '../components/ui/InsightLoading'
 import { RadarChart } from '../components/ui/RadarChart'
 import { computeFifaCard } from '../lib/fifa'
 import { useFilters } from '../hooks/useFilters'
 
 export function ComparePage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { filters } = useFilters()
   const [playerA, setPlayerA] = useState('')
   const [playerB, setPlayerB] = useState('')
+  const [insight, setInsight] = useState('')
 
   const { data: playersData, isLoading } = useQuery({
     queryKey: ['players', filters],
     queryFn: () => api.getPlayers(filters),
   })
 
-  const compareMutation = useMutation({
-    mutationFn: () => api.compare([playerA, playerB]),
+  const ready = Boolean(playerA && playerB && playerA !== playerB)
+
+  const insightMutation = useMutation({
+    mutationFn: () => api.compareInsight([playerA, playerB], i18n.language),
+    onSuccess: res => setInsight(res.text),
   })
 
   const players = playersData?.items ?? []
@@ -30,6 +35,12 @@ export function ComparePage() {
   const pb = players.find(p => p.player_key === playerB)
   const cardA = pa ? computeFifaCard(pa, players) : null
   const cardB = pb ? computeFifaCard(pb, players) : null
+
+  const onSelectChange = (side: 'a' | 'b', value: string) => {
+    setInsight('')
+    if (side === 'a') setPlayerA(value)
+    else setPlayerB(value)
+  }
 
   if (isLoading) {
     return (
@@ -50,13 +61,13 @@ export function ComparePage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <Select label={t('player_a')} value={playerA} onChange={e => setPlayerA(e.target.value)}>
+        <Select label={t('player_a')} value={playerA} onChange={e => onSelectChange('a', e.target.value)}>
           <option value="">{t('select_player')}</option>
           {players.map(p => (
             <option key={p.player_key} value={p.player_key}>{p.player} ({p.team})</option>
           ))}
         </Select>
-        <Select label={t('player_b')} value={playerB} onChange={e => setPlayerB(e.target.value)}>
+        <Select label={t('player_b')} value={playerB} onChange={e => onSelectChange('b', e.target.value)}>
           <option value="">{t('select_player')}</option>
           {players.map(p => (
             <option key={p.player_key} value={p.player_key}>{p.player} ({p.team})</option>
@@ -64,16 +75,7 @@ export function ComparePage() {
         </Select>
       </div>
 
-      <Button
-        variant="gold"
-        disabled={!playerA || !playerB || playerA === playerB}
-        loading={compareMutation.isPending}
-        onClick={() => compareMutation.mutate()}
-      >
-        {t('compare')}
-      </Button>
-
-      {pa && pb && cardA && cardB && (
+      {ready && pa && pb && cardA && cardB && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           <div className="flex flex-wrap justify-center gap-8">
             <PlayerFifaCard player={pa} allPlayers={players} />
@@ -116,6 +118,29 @@ export function ComparePage() {
               </tbody>
             </table>
           </GlassCard>
+
+          <div className="flex justify-center">
+            <Button
+              variant="gold"
+              loading={insightMutation.isPending}
+              onClick={() => insightMutation.mutate()}
+            >
+              <Sparkles className="w-4 h-4" />
+              {t('ai_compare_insights')}
+            </Button>
+          </div>
+
+          {insightMutation.isPending && (
+            <GlassCard>
+              <InsightLoading />
+            </GlassCard>
+          )}
+
+          {insight && !insightMutation.isPending && (
+            <GlassCard className="border border-fut-gold/20 text-sm text-white/85 whitespace-pre-wrap leading-relaxed">
+              {insight}
+            </GlassCard>
+          )}
         </motion.div>
       )}
     </div>

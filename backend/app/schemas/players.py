@@ -111,5 +111,10 @@ class PlayerInsightRequest(BaseModel):
     locale: str = "pt"
 
 
+class CompareInsightRequest(BaseModel):
+    keys: list[str] = Field(..., min_length=2, max_length=2)
+    locale: str = "pt"
+
+
 class InsightResponse(BaseModel):
     text: str

@@ -1,4 +1,5 @@
 """OpenAI insight generation."""
+import json
 from typing import Optional
 
 from openai import OpenAI
@@ -50,3 +51,32 @@ def generate_player_insight(player_name: str, metrics_text: str, locale: str = "
         return (r.choices[0].message.content or "").strip()
     except Exception as e:
         return f"Erro ao gerar relatório: {e}"
+
+
+def generate_compare_insight(
+    player_a: dict,
+    player_b: dict,
+    metrics: dict,
+    locale: str = "pt",
+) -> str:
+    client = _client()
+    if not client:
+        return "OpenAI API key não configurada."
+    lang = _lang_instruction(locale)
+    payload = {
+        "player_a": player_a,
+        "player_b": player_b,
+        "metrics": metrics,
+    }
+    prompt = f"""Você é um scout de futebol comparando dois jogadores U-23 do Brasileirão.
+Analise perfil, métricas e trade-offs. Seja específico e objetivo. Máx 6 bullets. {lang}
+DADOS: {json.dumps(payload, ensure_ascii=False, default=str)[:3500]}"""
+    try:
+        r = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=450,
+        )
+        return (r.choices[0].message.content or "").strip()
+    except Exception as e:
+        return f"Erro ao gerar comparação: {e}"
