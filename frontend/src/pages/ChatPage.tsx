@@ -12,14 +12,17 @@ import {
   deleteChatSession,
   getActiveSessionId,
   getSessionPlayerContext,
+  getSessionCompareContext,
   listArchivedChatSessions,
   listChatSessions,
   migrateLegacySession,
   setActiveSessionId,
   setSessionPlayerContext,
+  setSessionCompareContext,
   touchChatSession,
   unarchiveChatSession,
   type ChatSessionMeta,
+  type CompareChatContext,
   type PlayerChatContext,
 } from '../lib/chatSessions'
 import { sanitizeChatContent } from '../lib/sanitizeChat'
@@ -47,6 +50,9 @@ export function ChatPage() {
   const [playerContext, setPlayerContext] = useState<PlayerChatContext | null>(
     () => getSessionPlayerContext(getActiveSessionId() ?? ''),
   )
+  const [compareContext, setCompareContext] = useState<CompareChatContext | null>(
+    () => getSessionCompareContext(getActiveSessionId() ?? ''),
+  )
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [showAudit, setShowAudit] = useState<number | null>(null)
@@ -55,6 +61,8 @@ export function ChatPage() {
   sessionIdRef.current = sessionId
   const playerContextRef = useRef(playerContext)
   playerContextRef.current = playerContext
+  const compareContextRef = useRef(compareContext)
+  compareContextRef.current = compareContext
   const pendingSendRef = useRef(false)
   const handledNavKeyRef = useRef<string | null>(null)
 
@@ -64,18 +72,27 @@ export function ChatPage() {
   }, [])
 
   const buildChatContext = useCallback(() => {
-    const ctx = playerContextRef.current
+    const player = playerContextRef.current
+    const compare = compareContextRef.current
     const base: Record<string, unknown> = {
-      season: ctx?.player_season ?? filters.seasons[0] ?? 2024,
+      season: player?.player_season ?? compare?.season ?? filters.seasons[0] ?? 2024,
       position_group: filters.positionGroups[0] ?? 'CM_AM',
       age_max: filters.ageMax,
       minutes_min: filters.minutesMin,
     }
-    if (ctx) {
-      base.player_key = ctx.player_key
-      base.player_name = ctx.player_name
-      base.player_team = ctx.player_team
-      base.player_season = ctx.player_season
+    if (compare) {
+      base.compare_player_a_key = compare.player_a_key
+      base.compare_player_a_name = compare.player_a_name
+      base.compare_player_a_team = compare.player_a_team
+      base.compare_player_b_key = compare.player_b_key
+      base.compare_player_b_name = compare.player_b_name
+      base.compare_player_b_team = compare.player_b_team
+      if (compare.ai_insight) base.ai_insight = compare.ai_insight
+    } else if (player) {
+      base.player_key = player.player_key
+      base.player_name = player.player_name
+      base.player_team = player.player_team
+      base.player_season = player.player_season
     }
     return base
   }, [filters])
@@ -90,8 +107,14 @@ export function ChatPage() {
       api.chat(msg, sid, buildChatContext()),
     onSuccess: (_, { msg, sid }) => {
       setInput('')
-      const ctx = playerContextRef.current
-      touchChatSession(sid, ctx ? `${ctx.player_name} · ${ctx.player_team}` : msg.slice(0, 40))
+      const player = playerContextRef.current
+      const compare = compareContextRef.current
+      const title = compare
+        ? `${compare.player_a_name} vs ${compare.player_b_name}`
+        : player
+          ? `${player.player_name} · ${player.player_team}`
+          : msg.slice(0, 40)
+      touchChatSession(sid, title)
       refreshSessions()
       queryClient.invalidateQueries({ queryKey: ['chat-history', sid] })
     },
@@ -139,11 +162,13 @@ export function ChatPage() {
       sessionId?: string
       message?: string
       player?: PlayerChatContext
+      compare?: CompareChatContext
     } | null
 
     const targetSession = pending?.sessionId ?? state?.sessionId
     const messageToSend = pending?.message ?? state?.message
     const player = pending?.player ?? state?.player
+    const compare = pending?.compare ?? state?.compare
 
     if (!targetSession && !messageToSend) return
 
@@ -154,9 +179,16 @@ export function ChatPage() {
       setSessionId(targetSession)
       setActiveSessionId(targetSession)
     }
-    if (player && targetSession) {
+    if (compare && targetSession) {
+      setCompareContext(compare)
+      setSessionCompareContext(targetSession, compare)
+      setPlayerContext(null)
+      setSessionPlayerContext(targetSession, null)
+    } else if (player && targetSession) {
       setPlayerContext(player)
       setSessionPlayerContext(targetSession, player)
+      setCompareContext(null)
+      setSessionCompareContext(targetSession, null)
     }
     refreshSessions()
 
@@ -167,6 +199,7 @@ export function ChatPage() {
 
   useEffect(() => {
     setPlayerContext(getSessionPlayerContext(sessionId))
+    setCompareContext(getSessionCompareContext(sessionId))
   }, [sessionId])
 
   const selectSession = (id: string) => {
@@ -175,6 +208,7 @@ export function ChatPage() {
     setActiveSessionId(id)
     setMessages([])
     setPlayerContext(getSessionPlayerContext(id))
+    setCompareContext(getSessionCompareContext(id))
   }
 
   const startNewSession = () => {
@@ -185,7 +219,14 @@ export function ChatPage() {
     setMessages([])
     setInput('')
     setPlayerContext(null)
+    setCompareContext(null)
     setSessionPlayerContext(s.id, null)
+    setSessionCompareContext(s.id, null)
+  }
+
+  const clearCompareContext = () => {
+    setCompareContext(null)
+    setSessionCompareContext(sessionId, null)
   }
 
   const clearPlayerContext = () => {
@@ -219,6 +260,7 @@ export function ChatPage() {
         setSessionId(s.id)
         setMessages([])
         setPlayerContext(null)
+        setCompareContext(null)
       }
     }
   }
@@ -310,7 +352,26 @@ export function ChatPage() {
       </aside>
 
       <GlassCard className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden p-0">
-        {playerContext && (
+        {compareContext && (
+          <div className="px-4 py-2 border-b border-white/10 flex items-center justify-between gap-2 bg-fut-gold/5">
+            <p className="text-sm lg:text-base text-white/70 truncate">
+              {t('chat_about_compare', {
+                a: compareContext.player_a_name,
+                b: compareContext.player_b_name,
+                season: compareContext.season,
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={clearCompareContext}
+              className="shrink-0 p-1 rounded hover:bg-white/10 text-white/40"
+              title={t('chat_clear_compare')}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+        {playerContext && !compareContext && (
           <div className="px-4 py-2 border-b border-white/10 flex items-center justify-between gap-2 bg-fut-emerald/5">
             <p className="text-sm lg:text-base text-white/70 truncate">
               {t('chat_about_player', {
@@ -398,9 +459,11 @@ export function ChatPage() {
           <input
             className="flex-1 glass rounded-xl px-5 py-3.5 lg:py-4 text-sm lg:text-base focus:outline-none focus:ring-1 focus:ring-fut-gold/50"
             placeholder={
-              playerContext
-                ? t('ask_about_player', { name: playerContext.player_name })
-                : t('chat_input_placeholder')
+              compareContext
+                ? t('ask_about_compare', { a: compareContext.player_a_name, b: compareContext.player_b_name })
+                : playerContext
+                  ? t('ask_about_player', { name: playerContext.player_name })
+                  : t('chat_input_placeholder')
             }
             value={input}
             onChange={e => setInput(e.target.value)}

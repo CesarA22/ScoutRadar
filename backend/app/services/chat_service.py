@@ -51,6 +51,29 @@ def _apply_active_player(message: str, context: dict, plan: dict) -> dict:
     return plan
 
 
+def _apply_compare_context(message: str, context: dict, plan: dict) -> dict:
+    """Inject UI-selected player pair into plan for compare conversations."""
+    key_a = context.get("compare_player_a_key")
+    key_b = context.get("compare_player_b_key")
+    if not key_a or not key_b:
+        return plan
+
+    entities = plan.setdefault("entities", {})
+    players = list(entities.get("players") or [])
+    if len(players) < 2:
+        entities["players"] = [key_a, key_b]
+
+    intent = plan.get("intent", "out_of_scope")
+    if intent == "out_of_scope":
+        plan["intent"] = "compare"
+
+    filters = plan.setdefault("filters", {})
+    if context.get("season"):
+        filters["season"] = [int(context["season"])]
+
+    return plan
+
+
 def run_chat(db: Session, message: str, context: dict, session_id: str = "") -> dict:
     session_id = session_id or redis_svc.create_session_id()
     history = redis_svc.get_history(session_id)
@@ -75,7 +98,10 @@ def run_chat(db: Session, message: str, context: dict, session_id: str = "") -> 
     sanitized = policy.sanitized_input or message
     enriched_context = {**context, "chat_history": history_text}
     plan = run_planner(sanitized, enriched_context)
-    plan = _apply_active_player(sanitized, enriched_context, plan)
+    if enriched_context.get("compare_player_a_key") and enriched_context.get("compare_player_b_key"):
+        plan = _apply_compare_context(sanitized, enriched_context, plan)
+    else:
+        plan = _apply_active_player(sanitized, enriched_context, plan)
     tool_result = execute_tools(plan, db)
     evidence = tool_result.get("evidence")
 

@@ -5,11 +5,24 @@ export interface PlayerChatContext {
   player_season: number
 }
 
+export interface CompareChatContext {
+  compare_key: string
+  player_a_key: string
+  player_a_name: string
+  player_a_team: string
+  player_b_key: string
+  player_b_name: string
+  player_b_team: string
+  season: number
+  ai_insight?: string
+}
+
 export interface ChatSessionMeta {
   id: string
   title: string
   updatedAt: string
   player?: PlayerChatContext
+  compare?: CompareChatContext
   archived?: boolean
 }
 
@@ -17,15 +30,41 @@ export interface PendingChatPayload {
   sessionId: string
   message: string
   player?: PlayerChatContext
+  compare?: CompareChatContext
 }
 
 const SESSIONS_KEY = 'scoutradar_chat_sessions'
 const ACTIVE_KEY = 'scoutradar_chat_active'
 export const PENDING_MSG_KEY = 'scoutradar_chat_pending'
 const PLAYER_CTX_PREFIX = 'scoutradar_player_ctx_'
+const COMPARE_CTX_PREFIX = 'scoutradar_compare_ctx_'
 
 function playerSessionTitle(player: PlayerChatContext): string {
   return `${player.player_name} · ${player.player_team}`
+}
+
+function compareSessionTitle(c: CompareChatContext): string {
+  return `${c.player_a_name} vs ${c.player_b_name}`
+}
+
+export function buildCompareKey(keyA: string, keyB: string): string {
+  return [keyA, keyB].sort().join('::')
+}
+
+export function buildCompareContext(
+  pa: { player_key: string; player: string; team: string; season: number },
+  pb: { player_key: string; player: string; team: string; season: number },
+): CompareChatContext {
+  return {
+    compare_key: buildCompareKey(pa.player_key, pb.player_key),
+    player_a_key: pa.player_key,
+    player_a_name: pa.player,
+    player_a_team: pa.team,
+    player_b_key: pb.player_key,
+    player_b_name: pb.player,
+    player_b_team: pb.team,
+    season: pa.season,
+  }
 }
 
 function saveSessions(list: ChatSessionMeta[]) {
@@ -83,6 +122,7 @@ export function touchChatSession(id: string, title?: string) {
     title: title ?? prev?.title ?? 'Conversa',
     updatedAt: new Date().toISOString(),
     player: prev?.player,
+    compare: prev?.compare,
     archived: prev?.archived,
   }
   if (idx >= 0) list[idx] = entry
@@ -110,6 +150,7 @@ export function deleteChatSession(id: string) {
   const list = allSessionsRaw().filter(s => s.id !== id)
   saveSessions(list)
   sessionStorage.removeItem(`${PLAYER_CTX_PREFIX}${id}`)
+  sessionStorage.removeItem(`${COMPARE_CTX_PREFIX}${id}`)
   if (getActiveSessionId() === id) {
     const next = list.find(s => !s.archived) ?? list[0]
     if (next) setActiveSessionId(next.id)
@@ -136,6 +177,38 @@ export function getOrCreatePlayerSession(player: PlayerChatContext): ChatSession
     return updated
   }
   return createChatSession(playerSessionTitle(player), player)
+}
+
+/** One chat thread per player pair — reopens existing or creates a new compare session. */
+export function getOrCreateCompareSession(compare: CompareChatContext): ChatSessionMeta {
+  const list = allSessionsRaw()
+  const existing = list.find(s => s.compare?.compare_key === compare.compare_key && !s.archived)
+  if (existing) {
+    const updated: ChatSessionMeta = {
+      ...existing,
+      title: compareSessionTitle(compare),
+      updatedAt: new Date().toISOString(),
+      compare,
+      player: undefined,
+    }
+    const idx = list.findIndex(s => s.id === existing.id)
+    list[idx] = updated
+    saveSessions(list)
+    setActiveSessionId(existing.id)
+    setSessionCompareContext(existing.id, compare)
+    return updated
+  }
+  const session: ChatSessionMeta = {
+    id: crypto.randomUUID(),
+    title: compareSessionTitle(compare),
+    updatedAt: new Date().toISOString(),
+    compare,
+  }
+  list.unshift(session)
+  saveSessions(list)
+  setActiveSessionId(session.id)
+  setSessionCompareContext(session.id, compare)
+  return session
 }
 
 const LEGACY_SESSION_KEY = 'scoutradar_chat_session'
@@ -184,8 +257,36 @@ export function getSessionPlayerContext(sessionId: string): PlayerChatContext | 
   return meta?.player ?? null
 }
 
-export function setPendingChatMessage(sessionId: string, message: string, player?: PlayerChatContext) {
-  const payload: PendingChatPayload = { sessionId, message, player }
+export function getSessionCompareContext(sessionId: string): CompareChatContext | null {
+  try {
+    const raw = sessionStorage.getItem(`${COMPARE_CTX_PREFIX}${sessionId}`)
+    if (raw) return JSON.parse(raw) as CompareChatContext
+  } catch {
+    /* fall through */
+  }
+  const meta = allSessionsRaw().find(s => s.id === sessionId)
+  return meta?.compare ?? null
+}
+
+export function setSessionCompareContext(sessionId: string, compare: CompareChatContext | null) {
+  const key = `${COMPARE_CTX_PREFIX}${sessionId}`
+  if (compare) sessionStorage.setItem(key, JSON.stringify(compare))
+  else sessionStorage.removeItem(key)
+
+  const list = allSessionsRaw()
+  const idx = list.findIndex(s => s.id === sessionId)
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], compare: compare ?? undefined }
+    saveSessions(list)
+  }
+}
+
+export function setPendingChatMessage(
+  sessionId: string,
+  message: string,
+  opts?: { player?: PlayerChatContext; compare?: CompareChatContext },
+) {
+  const payload: PendingChatPayload = { sessionId, message, ...opts }
   sessionStorage.setItem(PENDING_MSG_KEY, JSON.stringify(payload))
 }
 

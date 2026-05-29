@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
 import { PlayerFifaCard } from '../components/PlayerFifaCard'
+import { CompareAskChat } from '../components/CompareAskChat'
 import { Button, GlassCard, Select, Spinner } from '../components/ui'
 import { InsightLoading } from '../components/ui/InsightLoading'
 import { RadarChart } from '../components/ui/RadarChart'
@@ -88,18 +89,6 @@ export function ComparePage() {
         </Select>
       </div>
 
-      {insightMutation.isPending && (
-        <GlassCard>
-          <InsightLoading />
-        </GlassCard>
-      )}
-
-      {insight && !insightMutation.isPending && (
-        <GlassCard className="border border-fut-gold/20 text-sm sm:text-base text-white/85 whitespace-pre-wrap leading-relaxed">
-          {insight}
-        </GlassCard>
-      )}
-
       {ready && pa && pb && cardA && cardB && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           <div className="flex flex-wrap justify-center items-center gap-8 lg:gap-16 py-4">
@@ -107,6 +96,19 @@ export function ComparePage() {
             <div className="font-display text-4xl lg:text-5xl text-fut-gold/50">VS</div>
             <PlayerFifaCard player={pb} allPlayers={players} />
           </div>
+
+          {insightMutation.isPending && (
+            <GlassCard>
+              <InsightLoading />
+            </GlassCard>
+          )}
+
+          {insight && !insightMutation.isPending && (
+            <GlassCard className="border border-fut-gold/20">
+              <p className="text-sm sm:text-base text-white/85 whitespace-pre-wrap leading-relaxed">{insight}</p>
+              <CompareAskChat playerA={pa} playerB={pb} aiInsight={insight} />
+            </GlassCard>
+          )}
 
           <GlassCard className="flex flex-col items-center py-6">
             <p className="text-sm text-white/40 uppercase tracking-wider mb-6">Radar comparativo</p>

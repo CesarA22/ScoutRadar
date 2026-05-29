@@ -67,7 +67,17 @@ def _build_planner_prompt(user_message: str, context: dict[str, Any]) -> str:
     ai_ctx_block = f"\n\nCONTEXT (recent AI insight):\n{ai_insight[:800]}\n" if ai_insight and len(ai_insight) > 20 else ""
 
     active_player_block = ""
-    if context.get("player_key") or context.get("player_name"):
+    if context.get("compare_player_a_key") and context.get("compare_player_b_key"):
+        active_player_block = f"""
+COMPARAÇÃO ATIVA (selecionada na UI — use em entities.players):
+- player_a_key: {context.get("compare_player_a_key", "")}
+- player_a: {context.get("compare_player_a_name", "")} ({context.get("compare_player_a_team", "")})
+- player_b_key: {context.get("compare_player_b_key", "")}
+- player_b: {context.get("compare_player_b_name", "")} ({context.get("compare_player_b_team", "")})
+- temporada: {context.get("season", season)}
+Prefira player_key em entities.players. Perguntas sobre diferenças, vantagens ou análise entre os dois → intent compare (NÃO out_of_scope).
+"""
+    elif context.get("player_key") or context.get("player_name"):
         active_player_block = f"""
 JOGADOR ATIVO (selecionado na UI — use em entities.players quando o usuário disser "este jogador", "deste player", "this player", etc.):
 - player_key: {context.get("player_key", "")}

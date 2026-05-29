@@ -37,7 +37,7 @@ export function PlayerAskChat({ player, compact }: PlayerAskChatProps) {
       : `Analise o jogador ${player.player} (${player.team}, ${player.season})`
     const session = getOrCreatePlayerSession(ctx)
     touchChatSession(session.id, `${player.player} · ${player.team}`)
-    setPendingChatMessage(session.id, msg, ctx)
+    setPendingChatMessage(session.id, msg, { player: ctx })
     navigate('/chat', { state: { sessionId: session.id, message: msg, player: ctx } })
   }
 
