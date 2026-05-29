@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { MessageCircle, Plus, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import {
   consumePendingChatMessage,
@@ -27,6 +27,7 @@ export function ChatPage() {
   const { filters } = useFilters()
   const queryClient = useQueryClient()
   const location = useLocation()
+  const navigate = useNavigate()
 
   const [sessions, setSessions] = useState<ChatSessionMeta[]>(() => {
     migrateLegacySession()
@@ -42,9 +43,13 @@ export function ChatPage() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [showAudit, setShowAudit] = useState<number | null>(null)
-  const pendingSendRef = useRef(false)
+
+  const sessionIdRef = useRef(sessionId)
+  sessionIdRef.current = sessionId
   const playerContextRef = useRef(playerContext)
   playerContextRef.current = playerContext
+  const pendingSendRef = useRef(false)
+  const handledNavKeyRef = useRef<string | null>(null)
 
   const refreshSessions = useCallback(() => setSessions(listChatSessions()), [])
 
@@ -71,13 +76,14 @@ export function ChatPage() {
   })
 
   const chatMutation = useMutation({
-    mutationFn: (msg: string) => api.chat(msg, sessionId, buildChatContext()),
-    onSuccess: (_, msg) => {
+    mutationFn: ({ msg, sid }: { msg: string; sid: string }) =>
+      api.chat(msg, sid, buildChatContext()),
+    onSuccess: (_, { msg, sid }) => {
       setInput('')
       const ctx = playerContextRef.current
-      touchChatSession(sessionId, ctx ? `${ctx.player_name} · ${ctx.player_team}` : msg.slice(0, 40))
+      touchChatSession(sid, ctx ? `${ctx.player_name} · ${ctx.player_team}` : msg.slice(0, 40))
       refreshSessions()
-      queryClient.invalidateQueries({ queryKey: ['chat-history', sessionId] })
+      queryClient.invalidateQueries({ queryKey: ['chat-history', sid] })
     },
   })
 
@@ -101,58 +107,60 @@ export function ChatPage() {
     })))
   }, [historyData, chatMutation.isPending])
 
-  const sendMessage = useCallback((text: string) => {
+  const sendMessage = useCallback((text: string, sid?: string) => {
     const trimmed = text.trim()
+    const targetSid = sid ?? sessionIdRef.current
     if (!trimmed || chatMutation.isPending) return
+    pendingSendRef.current = true
     setMessages(prev => [...prev, { role: 'user', content: trimmed }])
-    chatMutation.mutate(trimmed)
+    chatMutation.mutate({ msg: trimmed, sid: targetSid })
   }, [chatMutation])
 
+  const sendMessageRef = useRef(sendMessage)
+  sendMessageRef.current = sendMessage
+
+  // Handle navigation from player modal — once per location.key only.
   useEffect(() => {
+    const navKey = location.key
+    if (handledNavKeyRef.current === navKey) return
+
+    const pending = consumePendingChatMessage()
     const state = location.state as {
       sessionId?: string
       message?: string
       player?: PlayerChatContext
     } | null
-    const pending = consumePendingChatMessage()
 
-    const applyPlayer = (sid: string, player?: PlayerChatContext) => {
-      if (player) {
-        setPlayerContext(player)
-        setSessionPlayerContext(sid, player)
-      }
-    }
+    const targetSession = pending?.sessionId ?? state?.sessionId
+    const messageToSend = pending?.message ?? state?.message
+    const player = pending?.player ?? state?.player
 
-    if (pending) {
-      setSessionId(pending.sessionId)
-      setActiveSessionId(pending.sessionId)
-      applyPlayer(pending.sessionId, pending.player)
-      setMessages([])
-      refreshSessions()
-      pendingSendRef.current = true
-      queueMicrotask(() => sendMessage(pending.message))
-      return
-    }
+    if (!targetSession && !messageToSend) return
 
-    if (state?.sessionId) {
-      setSessionId(state.sessionId)
-      setActiveSessionId(state.sessionId)
-      applyPlayer(state.sessionId, state.player)
-      setMessages([])
-      refreshSessions()
-      if (state.message) {
-        const msg = state.message
-        pendingSendRef.current = true
-        queueMicrotask(() => sendMessage(msg))
-      }
+    handledNavKeyRef.current = navKey
+    navigate(location.pathname, { replace: true, state: null })
+
+    if (targetSession) {
+      setSessionId(targetSession)
+      setActiveSessionId(targetSession)
     }
-  }, [location.key, refreshSessions, sendMessage])
+    if (player && targetSession) {
+      setPlayerContext(player)
+      setSessionPlayerContext(targetSession, player)
+    }
+    refreshSessions()
+
+    if (messageToSend && targetSession) {
+      queueMicrotask(() => sendMessageRef.current(messageToSend, targetSession))
+    }
+  }, [location.key, location.pathname, navigate, refreshSessions])
 
   useEffect(() => {
     setPlayerContext(getSessionPlayerContext(sessionId))
   }, [sessionId])
 
   const selectSession = (id: string) => {
+    handledNavKeyRef.current = location.key
     setSessionId(id)
     setActiveSessionId(id)
     setMessages([])
@@ -162,6 +170,7 @@ export function ChatPage() {
   const startNewSession = () => {
     const s = createChatSession()
     refreshSessions()
+    handledNavKeyRef.current = location.key
     setSessionId(s.id)
     setMessages([])
     setInput('')
@@ -238,10 +247,10 @@ export function ChatPage() {
         )}
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {historyLoading && messages.length === 0 && (
+          {historyLoading && messages.length === 0 && !chatMutation.isPending && (
             <div className="flex justify-center py-12"><Spinner /></div>
           )}
-          {!historyLoading && messages.length === 0 && (
+          {!historyLoading && messages.length === 0 && !chatMutation.isPending && (
             <p className="text-white/30 text-sm text-center py-12">{t('chat_placeholder')}</p>
           )}
           <AnimatePresence initial={false}>
