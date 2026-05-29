@@ -49,7 +49,7 @@ export function PlayerAskChat({ player, compact }: PlayerAskChatProps) {
         onChange={e => setQ(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && send()}
         placeholder={t('ask_about_player', { name: player.player })}
-        className={`flex-1 glass rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-fut-emerald/50 ${compact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm'}`}
+        className={`flex-1 glass rounded-xl px-4 py-3 lg:px-5 lg:py-3.5 text-sm lg:text-base text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-fut-emerald/50 ${compact ? 'px-3 py-2 text-xs sm:text-sm' : ''}`}
       />
       <button
         type="button"

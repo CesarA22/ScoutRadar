@@ -8,6 +8,7 @@ import { PlayerFifaCard } from '../components/PlayerFifaCard'
 import { Button, GlassCard, Select, Spinner } from '../components/ui'
 import { InsightLoading } from '../components/ui/InsightLoading'
 import { RadarChart } from '../components/ui/RadarChart'
+import { useResponsiveSize } from '../hooks/useViewportWidth'
 import { computeFifaCard } from '../lib/fifa'
 import { useFilters } from '../hooks/useFilters'
 
@@ -17,6 +18,7 @@ export function ComparePage() {
   const [playerA, setPlayerA] = useState('')
   const [playerB, setPlayerB] = useState('')
   const [insight, setInsight] = useState('')
+  const radarSize = useResponsiveSize(260, 360)
 
   const { data: playersData, isLoading } = useQuery({
     queryKey: ['players', filters],
@@ -44,23 +46,23 @@ export function ComparePage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Spinner />
+      <div className="flex flex-col items-center justify-center fill-main gap-4">
+        <Spinner className="w-10 h-10" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-shell">
       <div>
-        <h2 className="font-display text-3xl font-bold flex items-center gap-2">
-          <Swords className="w-8 h-8 text-fut-emerald" />
+        <h2 className="page-title flex items-center gap-3">
+          <Swords className="w-9 h-9 lg:w-11 lg:h-11 text-fut-emerald shrink-0" />
           {t('compare')}
         </h2>
-        <p className="text-white/40 text-sm mt-1">{t('select_two')}</p>
+        <p className="page-subtitle">{t('select_two')}</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4 lg:gap-6 max-w-4xl xl:max-w-none">
         <Select label={t('player_a')} value={playerA} onChange={e => onSelectChange('a', e.target.value)}>
           <option value="">{t('select_player')}</option>
           {players.map(p => (
@@ -76,29 +78,29 @@ export function ComparePage() {
       </div>
 
       {ready && pa && pb && cardA && cardB && (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          <div className="flex flex-wrap justify-center gap-8">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 lg:space-y-8">
+          <div className="flex flex-wrap justify-center items-center gap-8 lg:gap-16 xl:gap-24 py-4">
             <PlayerFifaCard player={pa} allPlayers={players} />
-            <div className="hidden md:flex items-center font-display text-4xl text-fut-gold/50">VS</div>
+            <div className="font-display text-5xl lg:text-6xl xl:text-7xl text-fut-gold/50">VS</div>
             <PlayerFifaCard player={pb} allPlayers={players} />
           </div>
 
-          <GlassCard className="flex flex-col items-center">
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-4">Radar comparativo</p>
-            <RadarChart attrs={cardA.attrs} compare={cardB.attrs} size={280} />
-            <div className="flex gap-6 mt-4 text-xs">
-              <span className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-fut-emerald/80" /> {pa.player}</span>
-              <span className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-400/80" /> {pb.player}</span>
+          <GlassCard className="flex flex-col items-center py-6 lg:py-8">
+            <p className="text-sm lg:text-base text-white/40 uppercase tracking-wider mb-6">Radar comparativo</p>
+            <RadarChart attrs={cardA.attrs} compare={cardB.attrs} size={radarSize} />
+            <div className="flex flex-wrap justify-center gap-6 lg:gap-10 mt-6 text-sm lg:text-base">
+              <span className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-fut-emerald/80" /> {pa.player}</span>
+              <span className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-blue-400/80" /> {pb.player}</span>
             </div>
           </GlassCard>
 
           <GlassCard>
-            <table className="w-full text-sm">
+            <table className="w-full text-base lg:text-lg">
               <thead>
                 <tr className="text-white/40 border-b border-white/10">
-                  <th className="py-2 text-left">{t('metric')}</th>
-                  <th className="py-2 text-right">{pa.player}</th>
-                  <th className="py-2 text-right">{pb.player}</th>
+                  <th className="py-3 text-left">{t('metric')}</th>
+                  <th className="py-3 text-right">{pa.player}</th>
+                  <th className="py-3 text-right">{pb.player}</th>
                 </tr>
               </thead>
               <tbody>
@@ -109,9 +111,9 @@ export function ComparePage() {
                   const winB = b > a
                   return (
                     <tr key={attr} className="border-b border-white/5">
-                      <td className="py-2 font-stats font-bold text-fut-gold">{attr}</td>
-                      <td className={`py-2 text-right font-stats ${winA ? 'text-fut-emerald font-bold' : ''}`}>{a}</td>
-                      <td className={`py-2 text-right font-stats ${winB ? 'text-fut-emerald font-bold' : ''}`}>{b}</td>
+                      <td className="py-3 font-stats font-bold text-fut-gold">{attr}</td>
+                      <td className={`py-3 text-right font-stats text-lg ${winA ? 'text-fut-emerald font-bold' : ''}`}>{a}</td>
+                      <td className={`py-3 text-right font-stats text-lg ${winB ? 'text-fut-emerald font-bold' : ''}`}>{b}</td>
                     </tr>
                   )
                 })}
@@ -122,10 +124,11 @@ export function ComparePage() {
           <div className="flex justify-center">
             <Button
               variant="gold"
+              className="text-base lg:text-lg px-8 py-3.5"
               loading={insightMutation.isPending}
               onClick={() => insightMutation.mutate()}
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-5 h-5" />
               {t('ai_compare_insights')}
             </Button>
           </div>
@@ -137,7 +140,7 @@ export function ComparePage() {
           )}
 
           {insight && !insightMutation.isPending && (
-            <GlassCard className="border border-fut-gold/20 text-sm text-white/85 whitespace-pre-wrap leading-relaxed">
+            <GlassCard className="border border-fut-gold/20 text-base lg:text-lg text-white/85 whitespace-pre-wrap leading-relaxed">
               {insight}
             </GlassCard>
           )}

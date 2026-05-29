@@ -27,7 +27,7 @@ export function Button({ variant = 'primary', loading, children, className = '',
       <button
         type={type}
         onClick={onClick}
-        className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+        className={`inline-flex items-center justify-center gap-2 px-5 py-3 lg:px-6 lg:py-3.5 rounded-xl text-sm lg:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
         disabled={disabled || loading}
       >
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}

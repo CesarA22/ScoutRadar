@@ -41,33 +41,33 @@ export function ExplorerPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Spinner />
-        <p className="text-white/40 text-sm">{t('loading')}</p>
+      <div className="flex flex-col items-center justify-center fill-main gap-4">
+        <Spinner className="w-10 h-10" />
+        <p className="text-white/40 text-base">{t('loading')}</p>
       </div>
     )
   }
 
   if (!players.length) {
     return (
-      <GlassCard className="text-center py-16">
-        <Map className="w-12 h-12 text-white/20 mx-auto mb-4" />
-        <p className="text-white/50">{t('no_players')}</p>
+      <GlassCard className="text-center py-20 lg:py-28">
+        <Map className="w-16 h-16 text-white/20 mx-auto mb-4" />
+        <p className="text-white/50 text-lg">{t('no_players')}</p>
       </GlassCard>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap justify-between items-end gap-4">
+    <div className="page-shell fill-main flex flex-col">
+      <div className="flex flex-wrap justify-between items-end gap-4 shrink-0">
         <div>
-          <h2 className="font-display text-3xl font-bold text-white">{t('explorer')}</h2>
-          <p className="text-white/40 text-sm mt-1">
-            <CountUp value={players.length} className="text-fut-emerald font-stats font-bold" /> {t('players_shown')}
+          <h2 className="page-title text-white">{t('explorer')}</h2>
+          <p className="page-subtitle">
+            <CountUp value={players.length} className="text-fut-emerald font-stats font-bold text-lg" /> {t('players_shown')}
           </p>
         </div>
-        <Button variant="gold" loading={insightMutation.isPending} onClick={() => insightMutation.mutate()}>
-          <Sparkles className="w-4 h-4" />
+        <Button variant="gold" className="text-base lg:text-lg px-6 py-3" loading={insightMutation.isPending} onClick={() => insightMutation.mutate()}>
+          <Sparkles className="w-5 h-5" />
           {t('ai_insights')}
         </Button>
       </div>
@@ -75,12 +75,12 @@ export function ExplorerPage() {
       <ExplorerCharts players={players} />
 
       {insight && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-          <GlassCard className="border border-fut-gold/20 text-sm text-white/80 whitespace-pre-wrap">{insight}</GlassCard>
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="shrink-0">
+          <GlassCard className="border border-fut-gold/20 text-base lg:text-lg text-white/80 whitespace-pre-wrap leading-relaxed">{insight}</GlassCard>
         </motion.div>
       )}
 
-      <GlassCard className="h-[520px] p-2 gradient-border">
+      <GlassCard className="flex-1 min-h-[min(420px,calc(100dvh-16rem))] lg:min-h-[min(560px,calc(100dvh-18rem))] xl:min-h-[min(640px,calc(100dvh-20rem))] p-2 lg:p-3 gradient-border">
         <ScatterMap players={players} onSelect={setSelected} selectedKey={selected?.player_key} />
       </GlassCard>
 

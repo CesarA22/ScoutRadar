@@ -13,6 +13,11 @@ interface PlayerFifaCardProps {
   onClick?: () => void
 }
 
+const SIZE_CLASS = {
+  mini: 'w-[9.5rem] sm:w-[10.5rem] md:w-[11.5rem] lg:w-[12.5rem] xl:w-[13.5rem]',
+  full: 'w-[14rem] sm:w-[16rem] md:w-[17rem] lg:w-[19rem] xl:w-[20rem]',
+} as const
+
 export function PlayerFifaCard({ player, allPlayers, size = 'full', index = 0, onClick }: PlayerFifaCardProps) {
   const card = computeFifaCard(player, allPlayers)
   const style = TIER_STYLES[card.tier]
@@ -25,10 +30,8 @@ export function PlayerFifaCard({ player, allPlayers, size = 'full', index = 0, o
       transition={{ delay: index * 0.04, type: 'spring', stiffness: 260, damping: 22 }}
       whileHover={onClick ? { y: -8, scale: 1.03, rotateY: 4 } : { y: -4, scale: 1.02 }}
       onClick={onClick}
-      className={`relative overflow-hidden rounded-xl ${style.glow} ${onClick ? 'cursor-pointer' : ''}`}
+      className={`relative overflow-hidden rounded-xl aspect-[2/3] ${SIZE_CLASS[size]} ${style.glow} ${onClick ? 'cursor-pointer' : ''}`}
       style={{
-        width: isMini ? 140 : 220,
-        aspectRatio: '2/3',
         background: style.gradient,
         border: `2px solid ${style.border}`,
         clipPath: 'polygon(8% 0, 92% 0, 100% 8%, 100% 92%, 92% 100%, 8% 100%, 0 92%, 0 8%)',
@@ -38,15 +41,15 @@ export function PlayerFifaCard({ player, allPlayers, size = 'full', index = 0, o
         <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/30 animate-shimmer opacity-30" />
       </div>
 
-      <div className="relative h-full flex flex-col p-3" style={{ color: style.text }}>
+      <div className={`relative h-full flex flex-col ${isMini ? 'p-2.5 sm:p-3' : 'p-3 sm:p-4'}`} style={{ color: style.text }}>
         <div className="flex justify-between items-start">
           <div>
-            <div className={`font-display font-extrabold leading-none ${isMini ? 'text-3xl' : 'text-5xl'}`}>
+            <div className={`font-display font-extrabold leading-none ${isMini ? 'text-3xl sm:text-4xl' : 'text-5xl sm:text-6xl lg:text-7xl'}`}>
               {card.overall}
             </div>
-            <div className={`font-stats font-bold uppercase ${isMini ? 'text-xs' : 'text-sm'}`}>{card.positionShort}</div>
+            <div className={`font-stats font-bold uppercase ${isMini ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'}`}>{card.positionShort}</div>
           </div>
-          <div className={`text-right opacity-80 ${isMini ? 'text-[8px]' : 'text-[10px]'} font-stats font-semibold uppercase`}>
+          <div className={`text-right opacity-80 ${isMini ? 'text-[9px] sm:text-[10px]' : 'text-[10px] sm:text-xs'} font-stats font-semibold uppercase`}>
             <div>{player.team.slice(0, 12)}</div>
             <div>{player.season}</div>
           </div>
@@ -56,11 +59,11 @@ export function PlayerFifaCard({ player, allPlayers, size = 'full', index = 0, o
           <Silhouette variant={isMini ? 'mini' : 'default'} />
         </div>
 
-        <div className={`font-display font-bold uppercase truncate text-center mb-1 ${isMini ? 'text-xs' : 'text-sm'}`}>
+        <div className={`font-display font-bold uppercase truncate text-center mb-1 ${isMini ? 'text-xs sm:text-sm' : 'text-sm sm:text-base lg:text-lg'}`}>
           {player.player}
         </div>
 
-        <div className={`grid grid-cols-3 gap-x-1 gap-y-0.5 ${isMini ? 'text-[9px]' : 'text-xs'} font-stats font-bold`}>
+        <div className={`grid grid-cols-3 gap-x-1 gap-y-0.5 ${isMini ? 'text-[10px] sm:text-xs' : 'text-xs sm:text-sm'} font-stats font-bold`}>
           {ATTR_ORDER.map(attr => (
             <div key={attr} className="flex justify-between gap-1">
               <span className="opacity-70">{attr}</span>

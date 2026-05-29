@@ -32,9 +32,9 @@ export function OutliersPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Spinner />
-        <p className="text-white/40 text-sm">{t('loading')}</p>
+      <div className="flex flex-col items-center justify-center fill-main gap-4">
+        <Spinner className="w-10 h-10" />
+        <p className="text-white/40 text-base">{t('loading')}</p>
       </div>
     )
   }
@@ -42,16 +42,16 @@ export function OutliersPage() {
   const items = data ?? []
 
   return (
-    <div className="space-y-6">
+    <div className="page-shell">
       <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h2 className="font-display text-3xl font-bold flex items-center gap-2">
-            <TrendingUp className="w-8 h-8 text-fut-gold" />
+          <h2 className="page-title flex items-center gap-3">
+            <TrendingUp className="w-9 h-9 lg:w-11 lg:h-11 text-fut-gold shrink-0" />
             {t('outliers')}
           </h2>
-          <p className="text-white/40 text-sm mt-1">Top prospects — clique na carta para detalhes</p>
+          <p className="page-subtitle">Top prospects — clique na carta para detalhes</p>
         </div>
-        <Select label={t('metric')} value={metric} onChange={e => setMetric(e.target.value)} className="w-48">
+        <Select label={t('metric')} value={metric} onChange={e => setMetric(e.target.value)} className="w-full sm:w-56 lg:w-64">
           {METRICS.map(m => (
             <option key={m} value={m}>{m}</option>
           ))}
@@ -59,9 +59,9 @@ export function OutliersPage() {
       </div>
 
       {!items.length ? (
-        <GlassCard className="text-center py-16 text-white/50">{t('no_players')}</GlassCard>
+        <GlassCard className="text-center py-20 text-white/50 text-lg">{t('no_players')}</GlassCard>
       ) : (
-        <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 lg:gap-6 justify-items-center">
           {items.map((p, i) => (
             <PlayerFifaCard
               key={p.player_key}
@@ -76,15 +76,15 @@ export function OutliersPage() {
       )}
 
       <GlassCard className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm lg:text-base">
           <thead>
             <tr className="text-white/40 border-b border-white/10 text-left">
-              <th className="py-3 px-3">#</th>
-              <th className="py-3 px-3">Jogador</th>
-              <th className="py-3 px-3">Time</th>
-              <th className="py-3 px-3">Pos</th>
-              <th className="py-3 px-3 text-right">{metric}</th>
-              <th className="py-3 px-3 text-right">Prospect</th>
+              <th className="py-3 px-3 lg:px-4">#</th>
+              <th className="py-3 px-3 lg:px-4">Jogador</th>
+              <th className="py-3 px-3 lg:px-4">Time</th>
+              <th className="py-3 px-3 lg:px-4">Pos</th>
+              <th className="py-3 px-3 lg:px-4 text-right">{metric}</th>
+              <th className="py-3 px-3 lg:px-4 text-right">Prospect</th>
             </tr>
           </thead>
           <tbody>
@@ -97,14 +97,14 @@ export function OutliersPage() {
                 className="border-b border-white/5 hover:bg-white/5 cursor-pointer"
                 onClick={() => setSelected(p)}
               >
-                <td className="py-2 px-3 text-white/30 font-stats">{i + 1}</td>
-                <td className="py-2 px-3 font-medium">{p.player}</td>
-                <td className="py-2 px-3 text-white/60">{p.team}</td>
-                <td className="py-2 px-3">{p.position_group}</td>
-                <td className="py-2 px-3 text-right font-stats text-fut-gold">
+                <td className="py-2.5 px-3 lg:px-4 text-white/30 font-stats">{i + 1}</td>
+                <td className="py-2.5 px-3 lg:px-4 font-medium">{p.player}</td>
+                <td className="py-2.5 px-3 lg:px-4 text-white/60">{p.team}</td>
+                <td className="py-2.5 px-3 lg:px-4">{p.position_group}</td>
+                <td className="py-2.5 px-3 lg:px-4 text-right font-stats text-fut-gold">
                   {formatMetric(p, metric)}
                 </td>
-                <td className="py-2 px-3 text-right font-stats text-fut-emerald">{p.prospect_score?.toFixed(3)}</td>
+                <td className="py-2.5 px-3 lg:px-4 text-right font-stats text-fut-emerald">{p.prospect_score?.toFixed(3)}</td>
               </motion.tr>
             ))}
           </tbody>

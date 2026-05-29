@@ -9,7 +9,7 @@ interface GlassCardProps {
 }
 
 export function GlassCard({ children, className = '', hover, onClick }: GlassCardProps) {
-  const base = `glass rounded-xl p-4 shadow-card ${onClick ? 'cursor-pointer' : ''} ${className}`
+  const base = `glass rounded-xl p-4 sm:p-5 lg:p-6 shadow-card ${onClick ? 'cursor-pointer' : ''} ${className}`
 
   if (onClick || hover) {
     return (

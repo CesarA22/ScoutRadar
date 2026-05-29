@@ -39,7 +39,7 @@ export function FiltersDrawer({ open, onClose, availableTeams, availableClusters
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-sm glass-strong shadow-2xl overflow-y-auto"
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-sm lg:max-w-md glass-strong shadow-2xl overflow-y-auto"
           >
             <div className="sticky top-0 glass-strong border-b border-white/10 p-4 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -139,7 +139,7 @@ export function FiltersDrawerTrigger({ onClick }: { onClick: () => void }) {
       type="button"
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className="inline-flex items-center gap-2 glass px-4 py-2 rounded-lg text-sm font-medium hover:border-fut-gold/40 border border-transparent"
+      className="inline-flex items-center gap-2 glass px-5 py-2.5 lg:px-6 lg:py-3 rounded-xl text-sm lg:text-base font-medium hover:border-fut-gold/40 border border-transparent"
     >
       <SlidersHorizontal className="w-4 h-4 text-fut-gold" />
       {t('filters')}

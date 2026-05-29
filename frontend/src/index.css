@@ -26,17 +26,44 @@
   border-radius: 3px;
 }
 
+html {
+  font-size: clamp(15px, 0.35vw + 14px, 18px);
+}
+
 body {
-  @apply bg-fut-bg text-white min-h-screen antialiased;
+  @apply bg-fut-bg text-white min-h-screen antialiased text-base;
   font-family: Inter, system-ui, sans-serif;
 }
 
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .fut-bg {
-  @apply bg-fut-bg bg-fut-radial min-h-screen;
+  @apply bg-fut-bg bg-fut-radial min-h-[100dvh];
+}
+
+/* Shared page layout — full width, scales with viewport */
+.page-shell {
+  @apply w-full space-y-5 sm:space-y-6 lg:space-y-8;
+}
+
+.page-title {
+  @apply font-display text-3xl sm:text-4xl lg:text-5xl xl:text-[3.25rem] font-bold tracking-tight;
+}
+
+.page-subtitle {
+  @apply text-white/50 text-sm sm:text-base lg:text-lg mt-1.5;
+}
+
+.fill-main {
+  min-height: calc(100dvh - 5.5rem);
+}
+
+@media (min-width: 1024px) {
+  .fill-main {
+    min-height: calc(100dvh - 6rem);
+  }
 }
 
 .glass {

@@ -230,7 +230,7 @@ export function ChatPage() {
       <button
         type="button"
         onClick={() => selectSession(s.id)}
-        className={`flex-1 min-w-0 text-left px-3 py-2 pr-14 rounded-lg text-sm truncate transition-colors ${
+        className={`flex-1 min-w-0 text-left px-3 py-2.5 lg:py-3 pr-14 rounded-xl text-sm lg:text-base truncate transition-colors ${
           s.id === sessionId
             ? 'bg-fut-gold/15 text-fut-gold border border-fut-gold/30'
             : 'hover:bg-white/5 text-white/70'
@@ -271,21 +271,21 @@ export function ChatPage() {
   )
 
   return (
-    <div className="flex gap-4 h-[calc(100vh-8rem)] max-w-6xl mx-auto">
-      <aside className="w-56 shrink-0 glass rounded-xl flex flex-col overflow-hidden">
-        <div className="p-3 border-b border-white/10">
-          <h2 className="font-display font-bold text-lg flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-fut-emerald" />
+    <div className="flex gap-4 lg:gap-6 w-full h-[calc(100dvh-5.5rem)] lg:h-[calc(100dvh-6rem)] min-h-[480px]">
+      <aside className="w-64 lg:w-72 xl:w-80 shrink-0 glass rounded-xl flex flex-col overflow-hidden">
+        <div className="p-4 border-b border-white/10">
+          <h2 className="font-display font-bold text-xl lg:text-2xl flex items-center gap-2">
+            <MessageCircle className="w-6 h-6 text-fut-emerald" />
             {t('chat')}
           </h2>
         </div>
-        <div className="p-2">
+        <div className="p-3">
           <button
             type="button"
             onClick={startNewSession}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-fut-emerald/15 hover:bg-fut-emerald/25 text-fut-emerald border border-fut-emerald/30"
+            className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-sm lg:text-base bg-fut-emerald/15 hover:bg-fut-emerald/25 text-fut-emerald border border-fut-emerald/30"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
             {t('new_chat')}
           </button>
         </div>
@@ -312,7 +312,7 @@ export function ChatPage() {
       <GlassCard className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden p-0">
         {playerContext && (
           <div className="px-4 py-2 border-b border-white/10 flex items-center justify-between gap-2 bg-fut-emerald/5">
-            <p className="text-xs text-white/70 truncate">
+            <p className="text-sm lg:text-base text-white/70 truncate">
               {t('chat_about_player', {
                 name: playerContext.player_name,
                 team: playerContext.player_team,
@@ -330,7 +330,7 @@ export function ChatPage() {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 lg:space-y-5">
           {historyLoading && messages.length === 0 && !chatMutation.isPending && (
             <div className="flex justify-center py-12"><Spinner /></div>
           )}
@@ -346,7 +346,7 @@ export function ChatPage() {
                 className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                  className={`max-w-[90%] lg:max-w-[85%] rounded-2xl px-5 py-4 lg:px-6 lg:py-5 ${
                     m.role === 'user'
                       ? 'bg-gradient-to-br from-fut-emerald/30 to-fut-emerald-dim/20 border border-fut-emerald/30'
                       : 'glass border border-white/10'
@@ -355,7 +355,7 @@ export function ChatPage() {
                   <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1">
                     {m.role === 'user' ? t('chat_you') : t('chat_assistant')}
                   </p>
-                  <p className="text-sm whitespace-pre-wrap text-white/90">{m.content}</p>
+                  <p className="text-sm lg:text-base whitespace-pre-wrap text-white/90 leading-relaxed">{m.content}</p>
                   {m.role === 'assistant' && m.id && (
                     <div className="flex gap-2 mt-3">
                       <button
@@ -394,9 +394,9 @@ export function ChatPage() {
           )}
         </div>
 
-        <div className="p-4 border-t border-white/10 flex gap-2">
+        <div className="p-4 lg:p-5 border-t border-white/10 flex gap-3">
           <input
-            className="flex-1 glass rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-fut-gold/50"
+            className="flex-1 glass rounded-xl px-5 py-3.5 lg:py-4 text-sm lg:text-base focus:outline-none focus:ring-1 focus:ring-fut-gold/50"
             placeholder={
               playerContext
                 ? t('ask_about_player', { name: playerContext.player_name })

@@ -6,8 +6,8 @@ import { ChartInfoHelp, GlassCard } from './ui'
 const plotLayout = {
   paper_bgcolor: 'rgba(0,0,0,0)',
   plot_bgcolor: 'rgba(0,0,0,0)',
-  font: { color: 'rgba(255,255,255,0.6)', size: 10, family: 'Inter' },
-  margin: { l: 40, r: 8, t: 28, b: 36 },
+  font: { color: 'rgba(255,255,255,0.6)', size: 12, family: 'Inter' },
+  margin: { l: 44, r: 12, t: 32, b: 40 },
   showlegend: false,
 }
 
@@ -42,7 +42,7 @@ export function ExplorerCharts({ players }: ExplorerChartsProps) {
           }]}
           layout={{
             ...plotLayout,
-            title: { text: t('chart_by_position'), font: { size: 11, color: 'rgba(244,207,107,0.8)' } },
+            title: { text: t('chart_by_position'), font: { size: 13, color: 'rgba(244,207,107,0.8)' } },
             xaxis: { tickangle: -30, gridcolor: 'rgba(255,255,255,0.05)' },
             yaxis: { gridcolor: 'rgba(255,255,255,0.05)' },
           }}
@@ -67,7 +67,7 @@ export function ExplorerCharts({ players }: ExplorerChartsProps) {
           }]}
           layout={{
             ...plotLayout,
-            title: { text: t('chart_top_prospect'), font: { size: 11, color: 'rgba(244,207,107,0.8)' } },
+            title: { text: t('chart_top_prospect'), font: { size: 13, color: 'rgba(244,207,107,0.8)' } },
             xaxis: { tickangle: -30, gridcolor: 'rgba(255,255,255,0.05)' },
             yaxis: { gridcolor: 'rgba(255,255,255,0.05)' },
           }}
@@ -91,11 +91,11 @@ export function ExplorerCharts({ players }: ExplorerChartsProps) {
             marker: { colors: ['#10d979', '#f4cf6b', '#5b8def', '#ef4444', '#ec4899', '#06b6d4'] },
             hole: 0.45,
             textinfo: 'label+percent',
-            textfont: { size: 9, color: '#fff' },
+            textfont: { size: 11, color: '#fff' },
           }]}
           layout={{
             ...plotLayout,
-            title: { text: t('chart_clusters'), font: { size: 11, color: 'rgba(244,207,107,0.8)' } },
+            title: { text: t('chart_clusters'), font: { size: 13, color: 'rgba(244,207,107,0.8)' } },
           }}
           config={{ displayModeBar: false, responsive: true }}
           style={{ width: '100%', height: '100%' }}
@@ -106,9 +106,9 @@ export function ExplorerCharts({ players }: ExplorerChartsProps) {
   ] as const
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 shrink-0">
       {charts.map(c => (
-        <GlassCard key={c.key} className="h-[220px] p-2 relative">
+        <GlassCard key={c.key} className="h-[clamp(200px,22vh,340px)] p-2 lg:p-3 relative">
           <div className="absolute top-2 right-2 z-10">
             <ChartInfoHelp hint={c.hint} title={c.title} detail={c.detail} />
           </div>
