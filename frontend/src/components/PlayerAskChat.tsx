@@ -2,12 +2,26 @@ import { Send } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { ensureSession, setPendingChatMessage, touchChatSession } from '../lib/chatSessions'
+import {
+  getOrCreatePlayerSession,
+  setPendingChatMessage,
+  touchChatSession,
+  type PlayerChatContext,
+} from '../lib/chatSessions'
 import type { Player } from '../types'
 
 interface PlayerAskChatProps {
   player: Player
   compact?: boolean
+}
+
+function toPlayerContext(player: Player): PlayerChatContext {
+  return {
+    player_key: player.player_key,
+    player_name: player.player,
+    player_team: player.team,
+    player_season: player.season,
+  }
 }
 
 export function PlayerAskChat({ player, compact }: PlayerAskChatProps) {
@@ -16,11 +30,15 @@ export function PlayerAskChat({ player, compact }: PlayerAskChatProps) {
   const navigate = useNavigate()
 
   const send = () => {
-    const msg = q.trim() || `Analise o jogador ${player.player} (${player.team}, ${player.season})`
-    const session = ensureSession()
-    touchChatSession(session.id, `Sobre ${player.player}`)
-    setPendingChatMessage(session.id, msg)
-    navigate('/chat', { state: { sessionId: session.id, message: msg } })
+    const ctx = toPlayerContext(player)
+    const trimmed = q.trim()
+    const msg = trimmed
+      ? `${trimmed} (${player.player}, ${player.team}, ${player.season})`
+      : `Analise o jogador ${player.player} (${player.team}, ${player.season})`
+    const session = getOrCreatePlayerSession(ctx)
+    touchChatSession(session.id, `${player.player} · ${player.team}`)
+    setPendingChatMessage(session.id, msg, ctx)
+    navigate('/chat', { state: { sessionId: session.id, message: msg, player: ctx } })
   }
 
   return (

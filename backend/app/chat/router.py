@@ -57,7 +57,7 @@ INTENT_ALIASES = {
 
 
 def _build_planner_prompt(user_message: str, context: dict[str, Any]) -> str:
-    season = context.get("season", 2024)
+    season = context.get("player_season") or context.get("season", 2024)
     position_group = context.get("position_group", "CM_AM")
     minutes_min = context.get("minutes_min", 600)
     age_max = context.get("age_max", 23)
@@ -65,8 +65,20 @@ def _build_planner_prompt(user_message: str, context: dict[str, Any]) -> str:
     metrics_str = ", ".join(metrics_list[:20])
     ai_insight = context.get("ai_insight", "") or ""
     ai_ctx_block = f"\n\nCONTEXT (recent AI insight):\n{ai_insight[:800]}\n" if ai_insight and len(ai_insight) > 20 else ""
+
+    active_player_block = ""
+    if context.get("player_key") or context.get("player_name"):
+        active_player_block = f"""
+JOGADOR ATIVO (selecionado na UI — use em entities.players quando o usuário disser "este jogador", "deste player", "this player", etc.):
+- player_key: {context.get("player_key", "")}
+- nome: {context.get("player_name", "")}
+- time: {context.get("player_team", "")}
+- temporada: {context.get("player_season", season)}
+Prefira player_key em entities.players quando disponível.
+Perguntas sobre potencial, perfil, métricas ou análise desse jogador → intent player_profile (NÃO out_of_scope).
+"""
     return f"""You are a query planner for a football analytics application.
-Your job is ONLY to classify the user question and extract parameters.{ai_ctx_block}
+Your job is ONLY to classify the user question and extract parameters.{ai_ctx_block}{active_player_block}
 Valid intents: player_profile, compare, top_k, similar, cluster_explain, methodology, out_of_scope
 CONTEXT: season={season}, position_group={position_group}, minutes_min={minutes_min}, age_max={age_max}
 Métricas: {metrics_str}

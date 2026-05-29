@@ -56,6 +56,8 @@ const shared = {
   chat_thinking: 'Analisando...',
   chat_input_placeholder: 'Sua pergunta...',
   ask_about_player: 'Perguntar sobre {{name}}...',
+  chat_about_player: 'Conversando sobre {{name}} · {{team}} · {{season}}',
+  chat_clear_player: 'Remover contexto do jogador',
 }
 
 const resources = {
@@ -115,6 +117,8 @@ const resources = {
       chat_thinking: 'Analyzing...',
       chat_input_placeholder: 'Your question...',
       ask_about_player: 'Ask about {{name}}...',
+      chat_about_player: 'Chatting about {{name}} · {{team}} · {{season}}',
+      chat_clear_player: 'Clear player context',
     },
   },
   es: {
@@ -172,6 +176,8 @@ const resources = {
       chat_thinking: 'Analizando...',
       chat_input_placeholder: 'Tu pregunta...',
       ask_about_player: 'Preguntar sobre {{name}}...',
+      chat_about_player: 'Hablando de {{name}} · {{team}} · {{season}}',
+      chat_clear_player: 'Quitar contexto del jugador',
     },
   },
 }

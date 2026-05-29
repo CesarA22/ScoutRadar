@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
-import { MessageCircle, Plus, Send, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { MessageCircle, Plus, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
@@ -9,11 +9,14 @@ import {
   consumePendingChatMessage,
   createChatSession,
   getActiveSessionId,
+  getSessionPlayerContext,
   listChatSessions,
   migrateLegacySession,
   setActiveSessionId,
+  setSessionPlayerContext,
   touchChatSession,
   type ChatSessionMeta,
+  type PlayerChatContext,
 } from '../lib/chatSessions'
 import { Button, GlassCard, Spinner } from '../components/ui'
 import { useFilters } from '../hooks/useFilters'
@@ -33,11 +36,34 @@ export function ChatPage() {
     migrateLegacySession()
     return getActiveSessionId() ?? createChatSession().id
   })
+  const [playerContext, setPlayerContext] = useState<PlayerChatContext | null>(
+    () => getSessionPlayerContext(getActiveSessionId() ?? ''),
+  )
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [showAudit, setShowAudit] = useState<number | null>(null)
   const pendingSendRef = useRef(false)
+  const playerContextRef = useRef(playerContext)
+  playerContextRef.current = playerContext
+
   const refreshSessions = useCallback(() => setSessions(listChatSessions()), [])
+
+  const buildChatContext = useCallback(() => {
+    const ctx = playerContextRef.current
+    const base: Record<string, unknown> = {
+      season: ctx?.player_season ?? filters.seasons[0] ?? 2024,
+      position_group: filters.positionGroups[0] ?? 'CM_AM',
+      age_max: filters.ageMax,
+      minutes_min: filters.minutesMin,
+    }
+    if (ctx) {
+      base.player_key = ctx.player_key
+      base.player_name = ctx.player_name
+      base.player_team = ctx.player_team
+      base.player_season = ctx.player_season
+    }
+    return base
+  }, [filters])
 
   const { data: historyData, isLoading: historyLoading } = useQuery({
     queryKey: ['chat-history', sessionId],
@@ -45,16 +71,11 @@ export function ChatPage() {
   })
 
   const chatMutation = useMutation({
-    mutationFn: (msg: string) =>
-      api.chat(msg, sessionId, {
-        season: filters.seasons[0] ?? 2024,
-        position_group: filters.positionGroups[0] ?? 'CM_AM',
-        age_max: filters.ageMax,
-        minutes_min: filters.minutesMin,
-      }),
+    mutationFn: (msg: string) => api.chat(msg, sessionId, buildChatContext()),
     onSuccess: (_, msg) => {
       setInput('')
-      touchChatSession(sessionId, msg.slice(0, 40))
+      const ctx = playerContextRef.current
+      touchChatSession(sessionId, ctx ? `${ctx.player_name} · ${ctx.player_team}` : msg.slice(0, 40))
       refreshSessions()
       queryClient.invalidateQueries({ queryKey: ['chat-history', sessionId] })
     },
@@ -88,12 +109,25 @@ export function ChatPage() {
   }, [chatMutation])
 
   useEffect(() => {
-    const state = location.state as { sessionId?: string; message?: string } | null
+    const state = location.state as {
+      sessionId?: string
+      message?: string
+      player?: PlayerChatContext
+    } | null
     const pending = consumePendingChatMessage()
+
+    const applyPlayer = (sid: string, player?: PlayerChatContext) => {
+      if (player) {
+        setPlayerContext(player)
+        setSessionPlayerContext(sid, player)
+      }
+    }
 
     if (pending) {
       setSessionId(pending.sessionId)
       setActiveSessionId(pending.sessionId)
+      applyPlayer(pending.sessionId, pending.player)
+      setMessages([])
       refreshSessions()
       pendingSendRef.current = true
       queueMicrotask(() => sendMessage(pending.message))
@@ -103,6 +137,8 @@ export function ChatPage() {
     if (state?.sessionId) {
       setSessionId(state.sessionId)
       setActiveSessionId(state.sessionId)
+      applyPlayer(state.sessionId, state.player)
+      setMessages([])
       refreshSessions()
       if (state.message) {
         const msg = state.message
@@ -110,14 +146,17 @@ export function ChatPage() {
         queueMicrotask(() => sendMessage(msg))
       }
     }
-    // Only on mount / navigation with state
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [location.key, refreshSessions, sendMessage])
+
+  useEffect(() => {
+    setPlayerContext(getSessionPlayerContext(sessionId))
+  }, [sessionId])
 
   const selectSession = (id: string) => {
     setSessionId(id)
     setActiveSessionId(id)
     setMessages([])
+    setPlayerContext(getSessionPlayerContext(id))
   }
 
   const startNewSession = () => {
@@ -126,6 +165,13 @@ export function ChatPage() {
     setSessionId(s.id)
     setMessages([])
     setInput('')
+    setPlayerContext(null)
+    setSessionPlayerContext(s.id, null)
+  }
+
+  const clearPlayerContext = () => {
+    setPlayerContext(null)
+    setSessionPlayerContext(sessionId, null)
   }
 
   const handleSend = () => sendMessage(input)
@@ -171,6 +217,26 @@ export function ChatPage() {
       </aside>
 
       <GlassCard className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden p-0">
+        {playerContext && (
+          <div className="px-4 py-2 border-b border-white/10 flex items-center justify-between gap-2 bg-fut-emerald/5">
+            <p className="text-xs text-white/70 truncate">
+              {t('chat_about_player', {
+                name: playerContext.player_name,
+                team: playerContext.player_team,
+                season: playerContext.player_season,
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={clearPlayerContext}
+              className="shrink-0 p-1 rounded hover:bg-white/10 text-white/40"
+              title={t('chat_clear_player')}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {historyLoading && messages.length === 0 && (
             <div className="flex justify-center py-12"><Spinner /></div>
@@ -238,7 +304,11 @@ export function ChatPage() {
         <div className="p-4 border-t border-white/10 flex gap-2">
           <input
             className="flex-1 glass rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-fut-gold/50"
-            placeholder={t('chat_input_placeholder')}
+            placeholder={
+              playerContext
+                ? t('ask_about_player', { name: playerContext.player_name })
+                : t('chat_input_placeholder')
+            }
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}

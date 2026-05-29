@@ -17,7 +17,12 @@ def _build_writer_prompt(question: str, plan: dict, evidence: Any, ai_insight: s
 PERGUNTA: {question}
 PLANO: {json.dumps(plan, ensure_ascii=False, default=str)}
 EVIDÊNCIA: {json.dumps(evidence, ensure_ascii=False, default=str)}
-REGRAS: Use SOMENTE a evidência. Inclua bloco "Fontes (dataset):" no final. Temporadas 2023/2024 apenas."""
+REGRAS:
+- Use SOMENTE a evidência fornecida.
+- Responda em português claro, NUNCA em JSON bruto.
+- Se a evidência contiver "error", explique o problema de forma amigável.
+- Inclua bloco "Fontes (dataset):" no final.
+- Temporadas 2023/2024 apenas."""
 
 
 def run_writer(question: str, plan: dict, evidence: Any, ai_insight: str = "", chat_history: str = "") -> str:
