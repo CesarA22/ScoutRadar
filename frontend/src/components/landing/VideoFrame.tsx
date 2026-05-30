@@ -60,7 +60,7 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
         className="crystal-glow w-full"
       >
         <div className={`crystal-frame crystal-clip relative ${crystalSize}`}>
-          <div className="crystal-clip-inner absolute inset-[4px] bg-fut-bg overflow-hidden">
+          <div className="crystal-clip-inner absolute inset-[5px] bg-fut-bg overflow-hidden">
             {isLoading && !directUrls && (
               <div className="absolute inset-0 flex items-center justify-center z-10">
                 <Spinner className="w-10 h-10" />
@@ -87,6 +87,7 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
               />
             )}
             <div className="crystal-facet absolute inset-0 z-[1]" aria-hidden />
+            <div className="crystal-cracks absolute inset-0 z-[2]" aria-hidden />
           </div>
         </div>
       </motion.div>

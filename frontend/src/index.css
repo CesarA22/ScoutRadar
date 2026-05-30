@@ -122,30 +122,66 @@ select option {
   padding: 8px;
 }
 
-/* Landing crystal video player — asymmetric rectangular gem */
+/* Landing crystal video player — broken / shattered screen silhouette */
 .crystal-clip {
   clip-path: polygon(
-    0% 16%,
-    7% 2%,
-    74% 0%,
-    100% 9%,
-    100% 76%,
-    95% 100%,
-    18% 100%,
-    0% 88%
+    0% 22%,
+    3% 12%,
+    9% 6%,
+    18% 2%,
+    32% 0%,
+    47% 4%,
+    63% 0%,
+    78% 5%,
+    91% 1%,
+    100% 11%,
+    97% 26%,
+    100% 41%,
+    94% 56%,
+    100% 71%,
+    93% 86%,
+    100% 95%,
+    82% 100%,
+    66% 93%,
+    49% 100%,
+    33% 94%,
+    16% 100%,
+    4% 90%,
+    0% 73%,
+    6% 57%,
+    0% 41%,
+    4% 32%
   );
 }
 
 .crystal-clip-inner {
   clip-path: polygon(
-    1.2% 17%,
-    8% 3.5%,
-    73% 1.5%,
-    98.5% 10.5%,
-    98.5% 74.5%,
-    93.5% 98.5%,
-    19% 98.5%,
-    1.2% 86.5%
+    1.5% 23%,
+    4.5% 13.5%,
+    10.5% 7.5%,
+    19% 3.5%,
+    33% 1.5%,
+    48% 5%,
+    64% 1.5%,
+    79% 6.5%,
+    92% 2.5%,
+    98.5% 12.5%,
+    95.5% 27%,
+    98.5% 42%,
+    92.5% 57%,
+    98.5% 72%,
+    91.5% 87%,
+    98.5% 96%,
+    81% 98.5%,
+    65% 92%,
+    48.5% 98.5%,
+    32.5% 93%,
+    15.5% 98.5%,
+    3.5% 89%,
+    1.5% 72%,
+    7.5% 56%,
+    1.5% 40%,
+    5.5% 31%
   );
 }
 
@@ -162,10 +198,38 @@ select option {
   pointer-events: none;
   background: linear-gradient(
     108deg,
-    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.1) 0%,
     transparent 28%,
     transparent 58%,
-    rgba(16, 217, 121, 0.06) 72%,
-    rgba(255, 255, 255, 0.05) 100%
+    rgba(16, 217, 121, 0.05) 72%,
+    rgba(255, 255, 255, 0.04) 100%
   );
+}
+
+.crystal-cracks {
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    linear-gradient(
+      118deg,
+      transparent 44%,
+      rgba(255, 255, 255, 0.09) 44.6%,
+      rgba(255, 255, 255, 0.14) 45%,
+      rgba(255, 255, 255, 0.06) 45.4%,
+      transparent 46%
+    ),
+    linear-gradient(
+      32deg,
+      transparent 58%,
+      rgba(255, 255, 255, 0.05) 58.5%,
+      rgba(255, 255, 255, 0.1) 59%,
+      transparent 59.6%
+    ),
+    linear-gradient(
+      168deg,
+      transparent 68%,
+      rgba(244, 207, 107, 0.08) 68.4%,
+      rgba(244, 207, 107, 0.12) 68.8%,
+      transparent 69.4%
+    );
 }
