@@ -1,4 +1,5 @@
-"""S3-compatible storage (Railway Bucket / Tigris) for landing demo videos."""
+"""S3-compatible storage (Railway Bucket / Tigris / t3.storageapi.dev) for landing demo videos."""
+import logging
 from functools import lru_cache
 from pathlib import Path
 
@@ -7,6 +8,8 @@ from botocore.client import Config
 from botocore.exceptions import ClientError
 
 from app.config import get_settings
+
+log = logging.getLogger(__name__)
 
 DEMO_VIDEO_FILES: dict[str, str] = {
     "outliers": "outliers.mp4",
@@ -37,7 +40,7 @@ def _s3_client():
         region_name=_resolve_region(settings.s3_region),
         config=Config(
             signature_version="s3v4",
-            s3={"addressing_style": "virtual"},
+            s3={"addressing_style": "path"},
         ),
     )
 
@@ -56,6 +59,20 @@ def get_public_asset_url(filename: str) -> str | None:
         return None
     base = settings.s3_public_base_url.rstrip("/")
     return f"{base}/{_object_key(filename)}"
+
+
+def list_object_keys(max_keys: int = 50) -> list[str]:
+    """List object keys in the bucket (for diagnostics)."""
+    settings = get_settings()
+    if not settings.s3_configured:
+        return []
+    client = _s3_client()
+    try:
+        resp = client.list_objects_v2(Bucket=settings.s3_bucket_name, MaxKeys=max_keys)
+        return [obj["Key"] for obj in resp.get("Contents", [])]
+    except ClientError as exc:
+        log.error("S3 list_objects_v2 failed: %s", exc)
+        return []
 
 
 def test_connection() -> tuple[bool, str]:
@@ -129,5 +146,17 @@ def object_exists(filename: str) -> bool:
     try:
         client.head_object(Bucket=settings.s3_bucket_name, Key=_object_key(filename))
         return True
-    except ClientError:
+    except ClientError as exc:
+        code = exc.response.get("Error", {}).get("Code", "")
+        if code in ("404", "NoSuchKey"):
+            log.warning("S3 object not found: bucket=%s key=%s", settings.s3_bucket_name, filename)
+        else:
+            log.error(
+                "S3 head_object error: bucket=%s key=%s code=%s msg=%s",
+                settings.s3_bucket_name, filename, code,
+                exc.response.get("Error", {}).get("Message", str(exc)),
+            )
+        return False
+    except Exception as exc:
+        log.error("S3 object_exists unexpected error: %s", exc)
         return False

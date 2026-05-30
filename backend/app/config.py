@@ -2,8 +2,16 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _strip_env_quotes(value: str) -> str:
+    """Railway UI sometimes saves values with literal surrounding quotes."""
+    v = value.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in ('"', "'"):
+        return v[1:-1].strip()
+    return v
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = PROJECT_ROOT.parent
@@ -87,6 +95,21 @@ class Settings(BaseSettings):
     # Virtual-hosted public base (optional; only works if objects are public-read)
     s3_public_base_url: str = ""
     demo_video_presign_seconds: int = 3600
+
+    @field_validator(
+        "s3_endpoint_url",
+        "s3_bucket_name",
+        "s3_access_key_id",
+        "s3_secret_access_key",
+        "s3_region",
+        "s3_public_base_url",
+        mode="before",
+    )
+    @classmethod
+    def _normalize_s3_env(cls, v: object) -> object:
+        if isinstance(v, str):
+            return _strip_env_quotes(v)
+        return v
 
     @property
     def s3_configured(self) -> bool:
