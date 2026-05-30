@@ -1,21 +1,3 @@
-# Opcional: baixa vídeos do bucket no build se S3_* existirem (bucket > Add to Service > frontend)
-FROM python:3.12-alpine AS fetch-videos
-WORKDIR /fetch
-RUN pip install --no-cache-dir boto3
-COPY scripts/fetch_demo_videos.py .
-ARG S3_ENDPOINT_URL=""
-ARG S3_BUCKET_NAME=""
-ARG S3_ACCESS_KEY_ID=""
-ARG S3_SECRET_ACCESS_KEY=""
-ARG S3_REGION="auto"
-ENV S3_ENDPOINT_URL=$S3_ENDPOINT_URL \
-    S3_BUCKET_NAME=$S3_BUCKET_NAME \
-    S3_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID \
-    S3_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY \
-    S3_REGION=$S3_REGION \
-    OUT_DIR=/out
-RUN mkdir -p /out && python fetch_demo_videos.py || true
-
 FROM node:20-alpine AS build
 WORKDIR /app
 
@@ -23,8 +5,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
-# Vídeos do bucket (build) ou já em public/videos/ (local)
-COPY --from=fetch-videos /out/ ./public/videos/
+# public/videos/*.mp4 must be in git (see .gitignore) — Railway free plan is fine
 
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
