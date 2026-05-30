@@ -90,7 +90,12 @@ def _s3_stream_response(filename: str, request: Request) -> StreamingResponse:
     headers: dict[str, str] = {
         "Accept-Ranges": "bytes",
         "Cache-Control": "public, max-age=3600",
+        "Cross-Origin-Resource-Policy": "cross-origin",
     }
+    origin = request.headers.get("origin")
+    if origin:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Vary"] = "Origin"
     if obj.get("ContentLength") is not None:
         headers["Content-Length"] = str(obj["ContentLength"])
     if obj.get("ContentRange"):
@@ -161,8 +166,10 @@ def get_demo_video_url(key: str):
             detail="Video storage is not configured",
         )
 
-    # Backend proxy: same-origin / correct API host, no presigned URL in browser
-    poster_url = _stream_path(key, "poster") if poster_name else None
+    # Backend proxy: same-origin /api/.../stream (frontend proxies /api to backend)
+    poster_url = None
+    if poster_name and storage.object_exists(poster_name):
+        poster_url = _stream_path(key, "poster")
     return DemoVideoUrlResponse(
         key=key,
         url=_stream_path(key, "stream"),

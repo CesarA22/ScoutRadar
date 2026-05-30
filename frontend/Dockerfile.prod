@@ -6,10 +6,12 @@ RUN npm ci
 
 COPY . .
 
-# Set VITE_API_URL in Railway frontend service variables before deploy (build-time).
+# Build with empty VITE_API_URL so /api calls are same-origin (see vite preview proxy).
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
+
+# Runtime (Railway frontend service): VITE_PROXY_TARGET=https://your-backend.up.railway.app
 
 FROM node:20-alpine
 WORKDIR /app

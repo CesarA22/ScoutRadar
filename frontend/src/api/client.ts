@@ -31,6 +31,13 @@ export function mediaUrl(path: string | null | undefined): string | undefined {
   return `${BASE}${path}`
 }
 
+/** Media played in <video>/<img> — keep same-origin to avoid ORB (use /api/... not cross-origin backend URL). */
+export function sameOriginMediaUrl(path: string | null | undefined): string | undefined {
+  if (!path) return undefined
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return path.startsWith('/') ? path : `/${path}`
+}
+
 let onUnauthorized: (() => void) | null = null
 
 export function setUnauthorizedHandler(handler: () => void) {
