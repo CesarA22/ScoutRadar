@@ -98,27 +98,45 @@ Buckets privados retornam **403** em URL direta. O Scout Radar usa `GET /api/v1/
 
 #### Upload dos vídeos
 
-1. Coloque os arquivos em `frontend/public/videos/` (local, gitignored).  
-2. No painel Railway, bucket → **Add to Service** → serviço **backend** → estilo **AWS SDK (Generic)** → **Add Variables** (injeta `AWS_ENDPOINT_URL`, `AWS_S3_BUCKET_NAME`, etc.).  
-3. No `.env` local, copie de novo da aba **Credentials** (não use print antigo). Se a secret tiver `+`, use aspas:
-   `S3_SECRET_ACCESS_KEY="tsec_..."`
-4. Upload:
+1. Coloque os arquivos em `frontend/public/videos/` (local, gitignored):
+   - `outliers.mp4`, `compare.mp4`, `chat.mp4`
+2. No Railway: bucket → **Add to Service** → backend → **AWS SDK (Generic)** → **Add Variables**.
+3. **Não rode upload no Shell do container Railway** — a imagem Docker do backend **não inclui** os `.mp4`.
+
+**Forma recomendada (Railway CLI na sua máquina):**
 
 ```bash
 cd backend
 pip install -e ".[dev]"
+railway link          # escolha o projeto e o serviço backend
+railway run python -m app.scripts.upload_demo_videos --check
+railway run python -m app.scripts.upload_demo_videos
+```
+
+O `railway run` injeta `AWS_*` do serviço — não depende do `.env` local.
+
+**Alternativa (`.env` local):** copie credenciais **novas** da aba Credentials do bucket. Secret com `+` precisa de aspas:
+`AWS_SECRET_ACCESS_KEY="tsec_..."`
+
+```bash
+cd backend
+python -m app.scripts.upload_demo_videos --check
 python -m app.scripts.upload_demo_videos
 ```
 
-Ou via Docker:
+**Erro `SignatureDoesNotMatch`?** Keys erradas ou antigas. No bucket → Credentials → regenere ou use **Add to Service** de novo e `railway run`.
+
+**Alternativa AWS CLI** (se tiver `aws` instalado):
 
 ```bash
-docker compose exec backend python -m app.scripts.upload_demo_videos
+aws configure set default.s3.signature_version s3v4
+aws s3 cp frontend/public/videos/outliers.mp4 s3://SEU_BUCKET/outliers.mp4 --endpoint-url https://t3.storageapi.dev
+# repita para compare.mp4 e chat.mp4
 ```
 
-**Erro `SignatureDoesNotMatch`?** Credenciais incorretas ou secret truncada. Gere novas keys no Railway ou use **Add to Service**.
+Substitua `SEU_BUCKET` pelo valor de `AWS_S3_BUCKET_NAME` / `BUCKET` no Railway.
 
-**Frontend:** deixe `VITE_VIDEO_BASE_URL` vazio — a landing pede URLs presigned em `/api/v1/demo-videos/outliers` (etc.).
+**Frontend:** deixe `VITE_VIDEO_BASE_URL` vazio — a landing usa URLs presigned do backend.
 
 #### Opcional: bucket 100% público
 
