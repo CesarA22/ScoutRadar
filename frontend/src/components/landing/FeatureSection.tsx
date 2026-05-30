@@ -30,10 +30,10 @@ export function FeatureSection({
   icon,
 }: FeatureSectionProps) {
   return (
-    <section id={id} className="py-20 sm:py-28 lg:py-32 scroll-mt-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id={id} className="py-16 sm:py-24 lg:py-28 scroll-mt-24">
+      <div className="w-full max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16">
         <div
-          className={`grid lg:grid-cols-2 gap-12 lg:gap-16 items-center ${
+          className={`grid lg:grid-cols-2 gap-10 lg:gap-14 xl:gap-20 items-center ${
             reverse ? 'lg:[&>*:first-child]:order-2' : ''
           }`}
         >
@@ -43,28 +43,31 @@ export function FeatureSection({
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6, staggerChildren: 0.1 }}
             variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
-            className="space-y-6"
+            className="space-y-5 sm:space-y-6 min-w-0"
           >
             <motion.div variants={fadeUp} className="flex items-center gap-3">
               {icon}
-              <span className="text-fut-emerald text-sm font-semibold tracking-widest uppercase">
+              <span className="text-fut-emerald text-sm sm:text-base font-semibold tracking-widest uppercase">
                 {eyebrow}
               </span>
             </motion.div>
             <motion.h2
               variants={fadeUp}
-              className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight"
+              className="font-display text-3xl sm:text-4xl md:text-5xl xl:text-[3.25rem] font-bold leading-[1.1]"
             >
               {title}
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-white/60 text-lg leading-relaxed max-w-xl">
+            <motion.p
+              variants={fadeUp}
+              className="text-white/60 text-lg sm:text-xl leading-relaxed max-w-xl"
+            >
               {description}
             </motion.p>
             {bullets && bullets.length > 0 && (
-              <motion.ul variants={fadeUp} className="space-y-3">
+              <motion.ul variants={fadeUp} className="space-y-3 sm:space-y-4">
                 {bullets.map(b => (
-                  <li key={b} className="flex items-start gap-3 text-white/70">
-                    <span className="mt-1.5 w-2 h-2 rounded-full bg-fut-gold shrink-0" />
+                  <li key={b} className="flex items-start gap-3 text-white/75 text-base sm:text-lg">
+                    <span className="mt-2 w-2.5 h-2.5 rounded-full bg-fut-gold shrink-0" />
                     {b}
                   </li>
                 ))}
@@ -72,14 +75,9 @@ export function FeatureSection({
             )}
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.7, delay: 0.15 }}
-          >
+          <div className="w-full min-w-0">
             <VideoFrame videoKey={videoKey} />
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

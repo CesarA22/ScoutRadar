@@ -44,6 +44,15 @@ body {
   @apply bg-fut-bg bg-fut-radial min-h-[100dvh];
 }
 
+/* Landing: larger type & full-width layout (avoids "zoomed out" feel) */
+.landing-page {
+  font-size: clamp(16px, 0.45vw + 14px, 19px);
+}
+
+.landing-page .font-display {
+  letter-spacing: 0.02em;
+}
+
 /* Shared page layout — full width, scales with viewport */
 .page-shell {
   @apply w-full space-y-4 sm:space-y-5 lg:space-y-6;

@@ -11,7 +11,7 @@ export function LandingPage() {
   const openInterest = () => setInterestOpen(true)
 
   return (
-    <div className="fut-bg min-h-[100dvh] scroll-smooth">
+    <div className="landing-page fut-bg min-h-[100dvh] scroll-smooth w-full overflow-x-hidden">
       <LandingNav onInterestClick={openInterest} />
       <Hero onInterestClick={openInterest} />
 

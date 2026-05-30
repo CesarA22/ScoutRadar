@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowDown, BarChart3, MessageSquare, Sparkles } from 'lucide-react'
+import { ArrowDown, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { Button } from '../ui/Button'
@@ -22,15 +22,15 @@ export function Hero({ onInterestClick }: HeroProps) {
   const { isAuthenticated } = useAuth()
 
   return (
-    <section className="relative min-h-[100dvh] flex flex-col items-center justify-center px-4 pt-24 pb-16 overflow-hidden">
+    <section className="relative min-h-[min(100dvh,900px)] flex flex-col items-center justify-center px-5 sm:px-8 lg:px-12 pt-28 pb-20 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-fut-gold/8 blur-[100px]"
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[min(90vw,700px)] h-[min(90vw,700px)] rounded-full bg-fut-gold/8 blur-[100px]"
           animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.6, 0.4] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-fut-emerald/8 blur-[80px]"
+          className="absolute bottom-1/4 right-1/4 w-[min(60vw,450px)] h-[min(60vw,450px)] rounded-full bg-fut-emerald/8 blur-[80px]"
           animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         />
@@ -40,16 +40,16 @@ export function Hero({ onInterestClick }: HeroProps) {
         variants={stagger}
         initial="hidden"
         animate="visible"
-        className="relative z-10 max-w-4xl mx-auto text-center"
+        className="relative z-10 w-full max-w-5xl xl:max-w-6xl mx-auto text-center"
       >
-        <motion.div variants={item} className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-8">
-          <Sparkles className="w-4 h-4 text-fut-gold" />
-          <span className="text-sm text-white/70">Scouting de futebol com inteligência artificial</span>
+        <motion.div variants={item} className="inline-flex items-center gap-2 glass rounded-full px-5 py-2.5 mb-8">
+          <Sparkles className="w-5 h-5 text-fut-gold" />
+          <span className="text-base sm:text-lg text-white/70">Scouting de futebol com inteligência artificial</span>
         </motion.div>
 
         <motion.h1
           variants={item}
-          className="font-display text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6"
+          className="font-display text-[2.5rem] sm:text-6xl md:text-7xl xl:text-8xl font-extrabold tracking-tight leading-[1.05] mb-6 sm:mb-8"
         >
           <span className="text-white">Descubra talentos</span>
           <br />
@@ -58,35 +58,23 @@ export function Hero({ onInterestClick }: HeroProps) {
           </span>
         </motion.h1>
 
-        <motion.p variants={item} className="text-lg sm:text-xl text-white/55 max-w-2xl mx-auto mb-10 leading-relaxed">
+        <motion.p
+          variants={item}
+          className="text-lg sm:text-xl md:text-2xl text-white/55 max-w-3xl mx-auto mb-10 sm:mb-12 leading-relaxed px-2"
+        >
           Scout Radar combina dados avançados, detecção de outliers e um assistente de IA
           para acelerar suas decisões de scouting — tudo em uma interface premium.
         </motion.p>
 
-        <motion.div variants={item} className="flex flex-wrap items-center justify-center gap-4">
+        <motion.div variants={item} className="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
           <Link to={isAuthenticated ? '/explorer' : '/login'}>
-            <Button variant="gold" className="text-base px-8">
+            <Button variant="gold" className="text-base sm:text-lg px-8 sm:px-10 py-4">
               {isAuthenticated ? 'Ir para o app' : 'Começar agora'}
             </Button>
           </Link>
-          <Button variant="secondary" onClick={onInterestClick}>
+          <Button variant="secondary" onClick={onInterestClick} className="text-base sm:text-lg px-8 py-4">
             Estou interessado
           </Button>
-        </motion.div>
-
-        <motion.div
-          variants={item}
-          className="mt-16 flex flex-wrap justify-center gap-8 text-white/40 text-sm"
-        >
-          <span className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-fut-emerald" /> Outliers
-          </span>
-          <span className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-fut-gold" /> Comparação
-          </span>
-          <span className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-fut-emerald" /> Chat IA
-          </span>
         </motion.div>
       </motion.div>
 
@@ -99,7 +87,7 @@ export function Hero({ onInterestClick }: HeroProps) {
         aria-label="Ver recursos"
       >
         <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-          <ArrowDown className="w-6 h-6" />
+          <ArrowDown className="w-7 h-7" />
         </motion.div>
       </motion.a>
     </section>

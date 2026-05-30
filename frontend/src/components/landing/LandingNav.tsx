@@ -21,7 +21,7 @@ export function LandingNav({ onInterestClick }: LandingNavProps) {
       style={{ backgroundColor: navBg }}
       className={`fixed top-0 left-0 right-0 z-50 transition-shadow ${scrolled ? 'shadow-lg border-b border-white/10' : ''}`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
+      <div className="w-full max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 py-4 sm:py-5 flex items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-3 group">
           <motion.div
             className="w-10 h-10 rounded-xl bg-gradient-to-br from-fut-gold to-fut-emerald flex items-center justify-center font-display font-extrabold text-fut-bg shadow-glow-gold"
@@ -29,7 +29,7 @@ export function LandingNav({ onInterestClick }: LandingNavProps) {
           >
             SR
           </motion.div>
-          <span className="font-display text-xl font-bold text-fut-gold hidden sm:block">Scout Radar</span>
+          <span className="font-display text-xl sm:text-2xl font-bold text-fut-gold hidden sm:block">Scout Radar</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm text-white/60">

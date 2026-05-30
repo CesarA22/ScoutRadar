@@ -26,10 +26,31 @@ def submit_contact(body: ContactRequest):
             subject=body.subject,
             message=body.message,
         )
+    except RuntimeError as exc:
+        msg = str(exc)
+        logger.error("Contact email failed: %s", msg)
+        if "not configured" in msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Servico de e-mail nao configurado. Defina RESEND_API_KEY no backend.",
+            ) from exc
+        if "Resend rejected" in msg:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=(
+                    "Nao foi possivel enviar o e-mail. Verifique RESEND_API_KEY, "
+                    "CONTACT_FROM_EMAIL (use onboarding@resend.dev no plano gratis) e "
+                    "CONTACT_TO_EMAIL (deve ser o e-mail da sua conta Resend)."
+                ),
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Nao foi possivel enviar. Tente novamente em instantes.",
+        ) from exc
     except Exception as exc:
         logger.exception("Failed to send contact email")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Failed to send message. Please try again later.",
+            detail="Nao foi possivel enviar. Tente novamente em instantes.",
         ) from exc
     return ContactResponse()

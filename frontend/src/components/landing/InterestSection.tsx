@@ -8,7 +8,7 @@ interface InterestSectionProps {
 export function InterestSection({ onInterestClick }: InterestSectionProps) {
   return (
     <section id="contact" className="py-20 sm:py-28 scroll-mt-24">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-4xl mx-auto px-5 sm:px-8 lg:px-12">
         <motion.div
           initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
