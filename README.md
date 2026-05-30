@@ -93,8 +93,10 @@ pytest tests/ -v
 2. **Backend service:** root directory `backend/`, Dockerfile auto-detectado
    - Variáveis: `OPENAI_API_KEY`, `CORS_ORIGINS` (URL do frontend)
    - `DATABASE_URL` é injetada automaticamente pelo plugin Postgres
-3. **Frontend service:** root directory `frontend/`, use `Dockerfile.prod`
-   - Configure `VITE_API_URL` com a URL pública do backend
+3. **Frontend service:** root directory `frontend/`, `Dockerfile.prod`
+   - **Start Command:** `/docker-entrypoint.sh` (ou vazio — **nunca** `npx vite preview`)
+   - **Runtime:** `BACKEND_URL=https://seu-backend.up.railway.app` (sem barra final)
+   - **Build:** `VITE_API_URL` vazio (same-origin `/api` via nginx)
 4. (Opcional) Cron job semanal: `python -m app.pipeline --seasons 2023 2024`
 
 ---

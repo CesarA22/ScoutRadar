@@ -1,0 +1,8 @@
+# Railway reads this when the service root directory is `frontend/`
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.prod"
+
+[deploy]
+startCommand = "/docker-entrypoint.sh"
+restartPolicyType = "ON_FAILURE"

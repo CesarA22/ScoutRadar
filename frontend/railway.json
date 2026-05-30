@@ -5,6 +5,7 @@
     "dockerfilePath": "Dockerfile.prod"
   },
   "deploy": {
+    "startCommand": "/docker-entrypoint.sh",
     "restartPolicyType": "ON_FAILURE"
   }
 }
