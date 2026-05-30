@@ -4,13 +4,15 @@ import { mediaUrl } from '../../api/client'
 interface UserAvatarProps {
   username: string
   avatarUrl?: string | null
-  size?: 'sm' | 'md'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }
 
 const sizes = {
   sm: 'w-9 h-9 text-sm',
   md: 'w-11 h-11 text-base',
+  lg: 'w-16 h-16 text-lg',
+  xl: 'w-24 h-24 text-2xl',
 }
 
 export function UserAvatar({ username, avatarUrl, size = 'sm', className = '' }: UserAvatarProps) {
@@ -32,7 +34,7 @@ export function UserAvatar({ username, avatarUrl, size = 'sm', className = '' }:
       className={`${sizes[size]} rounded-full bg-gradient-to-br from-fut-gold/80 to-fut-emerald/80 flex items-center justify-center font-display font-bold text-fut-bg border-2 border-white/10 shrink-0 ${className}`}
       aria-hidden
     >
-      {initial || <User className="w-4 h-4" />}
+      {initial || <User className="w-5 h-5" />}
     </div>
   )
 }

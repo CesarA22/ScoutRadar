@@ -13,6 +13,7 @@ import { ExplorerPage } from './pages/ExplorerPage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { OutliersPage } from './pages/OutliersPage'
+import { ProfilePage } from './pages/ProfilePage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -54,6 +55,7 @@ export default function App() {
                 <Route path="outliers" element={<OutliersPage />} />
                 <Route path="compare" element={<ComparePage />} />
                 <Route path="chat" element={<ChatPage />} />
+                <Route path="profile" element={<ProfilePage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

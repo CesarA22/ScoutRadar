@@ -122,62 +122,131 @@ select option {
   padding: 8px;
 }
 
-/* Light theme */
+/* Input that adapts to dark/light theme */
+.app-input {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  color: #fff;
+  font-size: 0.875rem;
+  transition: border-color 0.15s;
+  outline: none;
+}
+.app-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+.app-input:focus {
+  border-color: rgba(244, 207, 107, 0.5);
+}
+
+/* ─── Light theme ──────────────────────────────────────────── */
 html.light {
   color-scheme: light;
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(15, 23, 42, 0.12);
+  --glass-bg: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(15, 23, 42, 0.1);
 }
 
 html.light body {
-  @apply bg-slate-100 text-slate-900;
+  background-color: #f0f4f8;
+  color: #0f172a;
 }
 
 html.light .fut-bg {
-  @apply bg-slate-100 text-slate-900;
-  background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 217, 121, 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(244, 207, 107, 0.06), transparent);
+  background-color: #f0f4f8 !important;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 217, 121, 0.07), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(244, 207, 107, 0.05), transparent);
 }
 
-html.light .glass,
+/* Glass */
+html.light .glass {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
 html.light .glass-strong {
-  background: var(--glass-bg);
-  border-color: var(--glass-border);
-  color: inherit;
+  background: rgba(255, 255, 255, 0.97) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
 }
 
-html.light .page-subtitle,
-html.light .text-white\/50,
-html.light .text-white\/40,
-html.light .text-white\/55,
-html.light .text-white\/60,
-html.light .text-white\/75,
-html.light .text-white\/80 {
-  @apply text-slate-600;
+/* Background tokens */
+html.light .bg-fut-bg    { background-color: #f0f4f8 !important; }
+html.light .bg-fut-surface { background-color: #f8fafc !important; }
+html.light .bg-fut-card  { background-color: #ffffff !important; }
+html.light .bg-fut-elevated { background-color: #e8eef5 !important; }
+html.light .bg-black\/30 { background-color: rgba(15, 23, 42, 0.05) !important; }
+html.light .bg-black\/60 { background-color: rgba(15, 23, 42, 0.45) !important; }
+html.light .bg-white\/5  { background-color: rgba(15, 23, 42, 0.04) !important; }
+html.light .bg-white\/10 { background-color: rgba(15, 23, 42, 0.07) !important; }
+
+/* Surface used in UserMenu / PreferencesModal dropdowns */
+html.light .bg-fut-surface,
+html.light [class*="bg-fut-surface"] {
+  background-color: #ffffff !important;
 }
 
-html.light .text-white\/30 {
-  @apply text-slate-400;
+/* Text — all white/* variants → slate */
+html.light .text-white      { color: #0f172a !important; }
+html.light .text-white\/90  { color: rgba(15, 23, 42, 0.9) !important; }
+html.light .text-white\/80  { color: rgba(15, 23, 42, 0.75) !important; }
+html.light .text-white\/75  { color: rgba(15, 23, 42, 0.7)  !important; }
+html.light .text-white\/70  { color: rgba(15, 23, 42, 0.65) !important; }
+html.light .text-white\/60  { color: rgba(15, 23, 42, 0.55) !important; }
+html.light .text-white\/55  { color: rgba(15, 23, 42, 0.5)  !important; }
+html.light .text-white\/50  { color: rgba(15, 23, 42, 0.48) !important; }
+html.light .text-white\/40  { color: rgba(15, 23, 42, 0.42) !important; }
+html.light .text-white\/30  { color: rgba(15, 23, 42, 0.35) !important; }
+html.light .text-white\/20  { color: rgba(15, 23, 42, 0.28) !important; }
+
+/* Borders */
+html.light .border-white\/5  { border-color: rgba(15, 23, 42, 0.07) !important; }
+html.light .border-white\/8  { border-color: rgba(15, 23, 42, 0.08) !important; }
+html.light .border-white\/10 { border-color: rgba(15, 23, 42, 0.1) !important; }
+html.light .border-white\/12 { border-color: rgba(15, 23, 42, 0.12) !important; }
+html.light .border-white\/20 { border-color: rgba(15, 23, 42, 0.18) !important; }
+
+/* Hover backgrounds */
+html.light .hover\:bg-white\/5:hover  { background-color: rgba(15, 23, 42, 0.05) !important; }
+html.light .hover\:bg-white\/10:hover { background-color: rgba(15, 23, 42, 0.08) !important; }
+html.light .hover\:text-white:hover   { color: #0f172a !important; }
+
+/* Nav inactive labels */
+html.light .text-white\/60.hover\:text-white {
+  color: rgba(15, 23, 42, 0.55);
 }
 
-html.light h1,
-html.light h2,
-html.light h3,
-html.light .text-white {
-  @apply text-slate-900;
-}
-
-html.light .border-white\/10,
-html.light .border-white\/5 {
-  @apply border-slate-200;
-}
-
-html.light .hover\:bg-white\/5:hover,
-html.light .hover\:bg-white\/10:hover {
-  @apply bg-slate-200/80;
-}
-
-html.light select option {
-  background-color: #f8fafc;
+/* Inputs */
+html.light .app-input {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.14);
   color: #0f172a;
+}
+html.light .app-input::placeholder {
+  color: rgba(15, 23, 42, 0.3);
+}
+html.light .app-input:focus {
+  border-color: rgba(196, 162, 58, 0.6);
+}
+
+/* Native select */
+html.light select,
+html.light select.fut-select {
+  color-scheme: light;
+  color: #0f172a;
+}
+html.light select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+/* Scrollbars */
+html.light * {
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+}
+html.light *::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
 }
