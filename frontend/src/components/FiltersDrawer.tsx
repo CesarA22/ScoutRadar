@@ -3,7 +3,7 @@ import { RotateCcw, SlidersHorizontal, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CLUSTER_COLORS } from '../lib/fifa'
 import { useFilters } from '../hooks/useFilters'
-import { Chip, Select, Slider } from './ui'
+import { Chip, Slider } from './ui'
 import { MultiSelect } from './ui/MultiSelect'
 import { Button } from './ui/Button'
 
