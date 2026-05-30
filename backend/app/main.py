@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -8,10 +9,22 @@ from fastapi.staticfiles import StaticFiles
 from app.api.deps import get_current_user
 from app.api.routes import auth, chat, contact, dataset, demo_videos, filters, health, metrics, outliers, players
 from app.config import REPO_ROOT, get_settings
+from app.services import storage_service as storage
+
+log = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    settings = get_settings()
+    if settings.s3_configured:
+        ok, msg = storage.test_connection()
+        log.info("S3 bucket=%s endpoint=%s list_ok=%s (%s)", settings.s3_bucket_name, settings.s3_endpoint_url, ok, msg)
+        if ok:
+            get_ok, get_msg = storage.test_get_object("chat.mp4")
+            log.info("S3 get_object chat.mp4: %s (%s)", get_ok, get_msg)
+    else:
+        log.warning("S3 not configured — demo videos will fail until bucket is linked to backend")
     yield
 
 

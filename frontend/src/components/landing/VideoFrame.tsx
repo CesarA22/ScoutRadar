@@ -1,12 +1,7 @@
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import type { DemoVideoKey } from '../../lib/videos'
-import { getDemoPosterUrl, getDemoVideoUrl, useDirectVideoUrls } from '../../lib/videos'
-
-/** Same-origin path — nginx/vite proxy forwards to backend (never cross-origin). */
-export function demoVideoStreamUrl(key: DemoVideoKey): string {
-  return `/api/v1/demo-videos/${key}/stream`
-}
+import { getDemoVideoUrl } from '../../lib/videos'
 
 interface VideoFrameProps {
   videoKey: DemoVideoKey
@@ -16,11 +11,10 @@ interface VideoFrameProps {
 export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const directUrls = useDirectVideoUrls()
   const [failed, setFailed] = useState(false)
 
-  const src = directUrls ? getDemoVideoUrl(videoKey) : demoVideoStreamUrl(videoKey)
-  const poster = directUrls ? getDemoPosterUrl(videoKey) : undefined
+  // Static /videos/*.mp4 — baked into frontend image at build (no S3, no backend stream)
+  const src = getDemoVideoUrl(videoKey)
 
   useEffect(() => {
     setFailed(false)
@@ -66,7 +60,6 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
                 key={src}
                 className="w-full h-full object-contain"
                 src={src}
-                poster={poster}
                 muted
                 loop
                 playsInline

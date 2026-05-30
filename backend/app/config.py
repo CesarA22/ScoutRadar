@@ -7,10 +7,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _strip_env_quotes(value: str) -> str:
-    """Railway UI sometimes saves values with literal surrounding quotes."""
+    """Railway UI often stores values with literal surrounding quotes — strip until clean."""
     v = value.strip()
-    if len(v) >= 2 and v[0] == v[-1] and v[0] in ('"', "'"):
-        return v[1:-1].strip()
+    for _ in range(5):
+        if len(v) >= 2 and v[0] == v[-1] and v[0] in ('"', "'"):
+            v = v[1:-1].strip()
+        else:
+            break
     return v
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -78,7 +81,12 @@ class Settings(BaseSettings):
     )
     s3_bucket_name: str = Field(
         default="",
-        validation_alias=AliasChoices("S3_BUCKET_NAME", "BUCKET", "AWS_S3_BUCKET_NAME"),
+        validation_alias=AliasChoices(
+            "S3_BUCKET_NAME",
+            "BUCKET",
+            "AWS_S3_BUCKET_NAME",
+            "RAILWAY_BUCKET_NAME",
+        ),
     )
     s3_access_key_id: str = Field(
         default="",

@@ -156,9 +156,9 @@ def stream_demo_video(key: str, request: Request):
         )
 
     filename = storage.DEMO_VIDEO_FILES[key]
-    if request.query_params.get("redirect") == "1":
-        return _redirect_to_presigned(filename)
-    return _s3_stream_response(filename, request)
+    if request.query_params.get("proxy") == "1":
+        return _s3_stream_response(filename, request)
+    return _redirect_to_presigned(filename)
 
 
 @router.get("/{key}/poster")
@@ -199,15 +199,29 @@ def get_demo_video_url(key: str):
     if not settings.s3_configured:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Video storage is not configured",
+            detail="Video storage is not configured. Link bucket to backend (Add to Service).",
         )
 
-    # Backend proxy: same-origin /api/.../stream (frontend proxies /api to backend)
+    try:
+        url = storage.generate_presigned_get_url(filename)
+    except Exception as exc:
+        log.exception("presign failed for %s", filename)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Could not sign video URL (check BUCKET/credentials): {exc}",
+        ) from exc
+
     poster_url = None
-    if poster_name and storage.object_exists(poster_name):
-        poster_url = _stream_path(key, "poster")
+    if poster_name:
+        try:
+            if storage.object_exists(poster_name):
+                poster_url = storage.generate_presigned_get_url(poster_name)
+        except Exception:
+            pass
+
     return DemoVideoUrlResponse(
         key=key,
-        url=_stream_path(key, "stream"),
+        url=url,
         poster_url=poster_url,
+        expires_in=settings.demo_video_presign_seconds,
     )
