@@ -1,9 +1,10 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import chat, dataset, filters, health, metrics, outliers, players
+from app.api.deps import get_current_user
+from app.api.routes import auth, chat, contact, dataset, demo_videos, filters, health, metrics, outliers, players
 from app.config import get_settings
 
 
@@ -24,13 +25,18 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    protected = [Depends(get_current_user)]
+
     app.include_router(health.router)
-    app.include_router(players.router, prefix="/api/v1")
-    app.include_router(outliers.router, prefix="/api/v1")
-    app.include_router(filters.router, prefix="/api/v1")
-    app.include_router(metrics.router, prefix="/api/v1")
-    app.include_router(dataset.router, prefix="/api/v1")
-    app.include_router(chat.router, prefix="/api/v1")
+    app.include_router(auth.router, prefix="/api/v1")
+    app.include_router(contact.router, prefix="/api/v1")
+    app.include_router(demo_videos.router, prefix="/api/v1")
+    app.include_router(players.router, prefix="/api/v1", dependencies=protected)
+    app.include_router(outliers.router, prefix="/api/v1", dependencies=protected)
+    app.include_router(filters.router, prefix="/api/v1", dependencies=protected)
+    app.include_router(metrics.router, prefix="/api/v1", dependencies=protected)
+    app.include_router(dataset.router, prefix="/api/v1", dependencies=protected)
+    app.include_router(chat.router, prefix="/api/v1", dependencies=protected)
 
     return app
 

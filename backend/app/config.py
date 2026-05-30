@@ -2,6 +2,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -30,6 +31,7 @@ class Settings(BaseSettings):
         env_file=(REPO_ROOT / ".env", PROJECT_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
+        populate_by_name=True,
     )
 
     database_url: str = "postgresql+psycopg://scout:scout@localhost:5432/scoutradar"
@@ -49,6 +51,51 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     env: str = "development"
     data_processed_dir: str = str(REPO_ROOT / "data" / "processed")
+
+    jwt_secret: str = "change-me-in-production"
+    jwt_expire_minutes: int = 60 * 24 * 7  # 7 days
+
+    resend_api_key: str = ""
+    contact_to_email: str = "cesaraugusto213@gmail.com"
+    contact_from_email: str = "onboarding@resend.dev"
+
+    seed_username: str = Field(default="cesar", validation_alias="SEED_USER")
+    seed_password: str = Field(default="admin@6347", validation_alias="SEED_PASSWORD")
+
+    # Railway Bucket (S3-compatible / Tigris) — demo videos
+    # Also accepts Railway variable references: ENDPOINT, BUCKET, ACCESS_KEY_ID, SECRET_ACCESS_KEY, REGION
+    s3_endpoint_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("S3_ENDPOINT_URL", "ENDPOINT", "AWS_ENDPOINT_URL"),
+    )
+    s3_bucket_name: str = Field(
+        default="",
+        validation_alias=AliasChoices("S3_BUCKET_NAME", "BUCKET", "AWS_S3_BUCKET_NAME"),
+    )
+    s3_access_key_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("S3_ACCESS_KEY_ID", "ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID"),
+    )
+    s3_secret_access_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("S3_SECRET_ACCESS_KEY", "SECRET_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY"),
+    )
+    s3_region: str = Field(
+        default="auto",
+        validation_alias=AliasChoices("S3_REGION", "REGION", "AWS_DEFAULT_REGION"),
+    )
+    # Virtual-hosted public base (optional; only works if objects are public-read)
+    s3_public_base_url: str = ""
+    demo_video_presign_seconds: int = 3600
+
+    @property
+    def s3_configured(self) -> bool:
+        return bool(
+            self.s3_endpoint_url
+            and self.s3_bucket_name
+            and self.s3_access_key_id
+            and self.s3_secret_access_key
+        )
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -1,7 +1,17 @@
+import type { DemoVideoKey } from '../lib/videos'
 import type { FilterState, Player } from '../types'
+import { clearToken, getToken } from '../auth/token'
 
 /** Empty in local dev (Vite proxy). Set VITE_API_URL on Railway to the backend public URL. */
 const BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
+
+export type AuthUser = { id: number; username: string }
+
+let onUnauthorized: (() => void) | null = null
+
+export function setUnauthorizedHandler(handler: () => void) {
+  onUnauthorized = handler
+}
 
 function buildParams(filters: Partial<FilterState>, extra: Record<string, string | number | undefined> = {}) {
   const params = new URLSearchParams()
@@ -15,13 +25,63 @@ function buildParams(filters: Partial<FilterState>, extra: Record<string, string
   return params
 }
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init)
-  if (!res.ok) throw new Error(`API error ${res.status}`)
+async function fetchJson<T>(url: string, init?: RequestInit, opts?: { public?: boolean }): Promise<T> {
+  const token = getToken()
+  const headers = new Headers(init?.headers)
+  if (token && !opts?.public) headers.set('Authorization', `Bearer ${token}`)
+  if (init?.body && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
+  }
+
+  const res = await fetch(url, { ...init, headers })
+  if (res.status === 401 && !opts?.public) {
+    clearToken()
+    onUnauthorized?.()
+    throw new Error('Unauthorized')
+  }
+  if (!res.ok) {
+    let detail = `API error ${res.status}`
+    try {
+      const err = await res.json() as { detail?: string }
+      if (typeof err.detail === 'string') detail = err.detail
+    } catch { /* ignore */ }
+    throw new Error(detail)
+  }
   return res.json()
 }
 
 export const api = {
+  authLogin: (username: string, password: string) =>
+    fetchJson<{ access_token: string; token_type: string }>(
+      `${BASE}/api/v1/auth/login`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      },
+      { public: true },
+    ),
+
+  authMe: () => fetchJson<AuthUser>(`${BASE}/api/v1/auth/me`),
+
+  getDemoVideoUrl: (key: DemoVideoKey) =>
+    fetchJson<{ key: string; url: string; poster_url?: string | null; expires_in?: number }>(
+      `${BASE}/api/v1/demo-videos/${key}`,
+      undefined,
+      { public: true },
+    ),
+
+  contact: (payload: { name: string; email: string; subject: string; message: string }) =>
+    fetchJson<{ ok: boolean; message: string }>(
+      `${BASE}/api/v1/contact`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      },
+      { public: true },
+    ),
+
   getPlayers: (filters: Partial<FilterState>, limit = 500) =>
     fetchJson<{ items: Player[]; total: number }>(`${BASE}/api/v1/players?${buildParams(filters, { limit })}`),
 

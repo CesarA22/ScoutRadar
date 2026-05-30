@@ -1,16 +1,26 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import { LogOut } from 'lucide-react'
 import { useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../auth/AuthContext'
 import { api } from '../api/client'
 import { FiltersDrawer, FiltersDrawerTrigger } from './FiltersDrawer'
+import { Button } from './ui/Button'
 
 export function Layout() {
   const { t } = useTranslation()
+  const { logout, user } = useAuth()
+  const navigate = useNavigate()
   const location = useLocation()
   const [filtersOpen, setFiltersOpen] = useState(false)
   const isChat = location.pathname === '/chat'
+
+  function handleLogout() {
+    logout()
+    navigate('/')
+  }
 
   const { data: filterOpts } = useQuery({
     queryKey: ['filters'],
@@ -34,14 +44,18 @@ export function Layout() {
       <header className="shrink-0 z-30 glass-strong border-b border-white/10">
         <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-3 lg:py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3 lg:gap-4">
-            <motion.div
-              className="w-11 h-11 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-fut-gold to-fut-emerald flex items-center justify-center font-display font-extrabold text-fut-bg text-lg lg:text-xl shadow-glow-gold"
-              animate={{ boxShadow: ['0 0 20px rgba(244,207,107,0.3)', '0 0 32px rgba(16,217,121,0.25)', '0 0 20px rgba(244,207,107,0.3)'] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              SR
-            </motion.div>
-            <h1 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold tracking-wide text-fut-gold">{t('app_title')}</h1>
+            <Link to="/" className="flex items-center gap-3 lg:gap-4 group">
+              <motion.div
+                className="w-11 h-11 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-fut-gold to-fut-emerald flex items-center justify-center font-display font-extrabold text-fut-bg text-lg lg:text-xl shadow-glow-gold"
+                animate={{ boxShadow: ['0 0 20px rgba(244,207,107,0.3)', '0 0 32px rgba(16,217,121,0.25)', '0 0 20px rgba(244,207,107,0.3)'] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                SR
+              </motion.div>
+              <h1 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold tracking-wide text-fut-gold group-hover:text-white transition-colors">
+                {t('app_title')}
+              </h1>
+            </Link>
           </div>
 
           <nav className="flex gap-1 glass rounded-xl p-1 relative order-last w-full sm:order-none sm:w-auto">
@@ -69,7 +83,16 @@ export function Layout() {
             ))}
           </nav>
 
-          <FiltersDrawerTrigger onClick={() => setFiltersOpen(true)} />
+          <div className="flex items-center gap-2 sm:gap-3">
+            {user && (
+              <span className="hidden md:inline text-sm text-white/40">{user.username}</span>
+            )}
+            <Button variant="ghost" onClick={handleLogout} className="!px-3 !py-2">
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
+            <FiltersDrawerTrigger onClick={() => setFiltersOpen(true)} />
+          </div>
         </div>
       </header>
 

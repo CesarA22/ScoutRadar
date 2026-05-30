@@ -28,6 +28,7 @@
 
 html {
   font-size: clamp(14px, 0.15vw + 13.5px, 16px);
+  scroll-behavior: smooth;
 }
 
 body {

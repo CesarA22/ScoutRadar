@@ -9,6 +9,8 @@ venv/
 # Node
 node_modules/
 frontend/dist/
+frontend/public/videos/*
+!frontend/public/videos/.gitkeep
 
 # Dados - não versionar
 data/raw/
