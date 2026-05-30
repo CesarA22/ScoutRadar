@@ -22,7 +22,7 @@ export function Hero({ onInterestClick }: HeroProps) {
   const { isAuthenticated } = useAuth()
 
   return (
-    <section className="relative min-h-[min(100dvh,900px)] flex flex-col items-center justify-center px-5 sm:px-8 lg:px-12 pt-28 pb-20 overflow-hidden">
+    <section className="relative min-h-[min(100dvh,900px)] flex flex-col items-center justify-center px-5 sm:px-8 lg:px-12 pt-32 pb-24 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
           className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[min(90vw,700px)] h-[min(90vw,700px)] rounded-full bg-fut-gold/8 blur-[100px]"
@@ -42,14 +42,14 @@ export function Hero({ onInterestClick }: HeroProps) {
         animate="visible"
         className="relative z-10 w-full max-w-5xl xl:max-w-6xl mx-auto text-center"
       >
-        <motion.div variants={item} className="inline-flex items-center gap-2 glass rounded-full px-5 py-2.5 mb-8">
+        <motion.div variants={item} className="inline-flex items-center gap-2 glass rounded-full px-5 py-2.5 mb-10 sm:mb-12">
           <Sparkles className="w-5 h-5 text-fut-gold" />
           <span className="text-base sm:text-lg text-white/70">Scouting de futebol com inteligência artificial</span>
         </motion.div>
 
         <motion.h1
           variants={item}
-          className="font-display text-[2.5rem] sm:text-6xl md:text-7xl xl:text-8xl font-extrabold tracking-tight leading-[1.05] mb-6 sm:mb-8"
+          className="font-display text-[2.5rem] sm:text-6xl md:text-7xl xl:text-8xl font-extrabold tracking-tight leading-[1.05] mb-8 sm:mb-10"
         >
           <span className="text-white">Descubra talentos</span>
           <br />
@@ -60,13 +60,13 @@ export function Hero({ onInterestClick }: HeroProps) {
 
         <motion.p
           variants={item}
-          className="text-lg sm:text-xl md:text-2xl text-white/55 max-w-3xl mx-auto mb-10 sm:mb-12 leading-relaxed px-2"
+          className="text-lg sm:text-xl md:text-2xl text-white/55 max-w-3xl mx-auto mb-12 sm:mb-14 leading-relaxed px-2"
         >
           Scout Radar combina dados avançados, detecção de outliers e um assistente de IA
           para acelerar suas decisões de scouting — tudo em uma interface premium.
         </motion.p>
 
-        <motion.div variants={item} className="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
+        <motion.div variants={item} className="flex flex-wrap items-center justify-center gap-5 sm:gap-6">
           <Link to={isAuthenticated ? '/explorer' : '/login'}>
             <Button variant="gold" className="text-base sm:text-lg px-8 sm:px-10 py-4">
               {isAuthenticated ? 'Ir para o app' : 'Começar agora'}

@@ -121,3 +121,50 @@ select option {
   color: #f0f4f8;
   padding: 8px;
 }
+
+/* Landing crystal video player */
+.crystal-clip {
+  clip-path: polygon(
+    18% 0%,
+    82% 0%,
+    100% 18%,
+    100% 82%,
+    82% 100%,
+    18% 100%,
+    0% 82%,
+    0% 18%
+  );
+}
+
+.crystal-clip-inner {
+  clip-path: polygon(
+    19% 1.5%,
+    81% 1.5%,
+    98.5% 19%,
+    98.5% 81%,
+    81% 98.5%,
+    19% 98.5%,
+    1.5% 81%,
+    1.5% 19%
+  );
+}
+
+.crystal-frame {
+  background: linear-gradient(145deg, var(--gold) 0%, var(--emerald) 45%, var(--gold-dark) 100%);
+}
+
+.crystal-glow {
+  filter: drop-shadow(0 0 28px rgba(244, 207, 107, 0.35))
+    drop-shadow(0 0 48px rgba(16, 217, 121, 0.15));
+}
+
+.crystal-facet {
+  pointer-events: none;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    transparent 35%,
+    transparent 65%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+}

@@ -30,10 +30,10 @@ export function FeatureSection({
   icon,
 }: FeatureSectionProps) {
   return (
-    <section id={id} className="py-16 sm:py-24 lg:py-28 scroll-mt-24">
+    <section id={id} className="py-24 sm:py-32 lg:py-40 scroll-mt-24">
       <div className="w-full max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16">
         <div
-          className={`grid lg:grid-cols-2 gap-10 lg:gap-14 xl:gap-20 items-center ${
+          className={`grid lg:grid-cols-[1fr_1.15fr] gap-14 lg:gap-20 xl:gap-28 items-center ${
             reverse ? 'lg:[&>*:first-child]:order-2' : ''
           }`}
         >
@@ -43,7 +43,7 @@ export function FeatureSection({
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6, staggerChildren: 0.1 }}
             variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
-            className="space-y-5 sm:space-y-6 min-w-0"
+            className="space-y-6 sm:space-y-8 min-w-0"
           >
             <motion.div variants={fadeUp} className="flex items-center gap-3">
               {icon}
@@ -64,7 +64,7 @@ export function FeatureSection({
               {description}
             </motion.p>
             {bullets && bullets.length > 0 && (
-              <motion.ul variants={fadeUp} className="space-y-3 sm:space-y-4">
+              <motion.ul variants={fadeUp} className="space-y-4 sm:space-y-5 pt-1">
                 {bullets.map(b => (
                   <li key={b} className="flex items-start gap-3 text-white/75 text-base sm:text-lg">
                     <span className="mt-2 w-2.5 h-2.5 rounded-full bg-fut-gold shrink-0" />

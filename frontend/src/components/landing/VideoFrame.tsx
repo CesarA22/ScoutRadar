@@ -11,6 +11,9 @@ interface VideoFrameProps {
   className?: string
 }
 
+const crystalHeights =
+  'min-h-[280px] sm:min-h-[380px] md:min-h-[460px] lg:min-h-[560px] xl:min-h-[640px]'
+
 export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -50,27 +53,31 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
   return (
     <div ref={containerRef} className={`w-full ${className}`}>
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-60px' }}
-        transition={{ duration: 0.5 }}
-        className="gradient-border rounded-2xl lg:rounded-3xl p-[1px] shadow-glow-gold/20 w-full"
+        transition={{ duration: 0.55 }}
+        className="crystal-glow w-full"
       >
-        <div className="rounded-2xl lg:rounded-3xl overflow-hidden bg-fut-card w-full">
-          <div className="relative w-full min-h-[220px] sm:min-h-[300px] md:min-h-[360px] lg:min-h-[420px] xl:min-h-[480px] bg-fut-bg flex items-center justify-center">
+        <div className={`crystal-frame crystal-clip relative w-full ${crystalHeights}`}>
+          <div className="crystal-clip-inner absolute inset-[4px] bg-fut-bg overflow-hidden">
             {isLoading && !directUrls && (
-              <Spinner className="w-10 h-10" />
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <Spinner className="w-10 h-10" />
+              </div>
             )}
             {isError && !directUrls && !isLoading && (
-              <p className="text-white/40 text-sm px-6 text-center">
-                Video indisponivel no momento.
-              </p>
+              <div className="absolute inset-0 flex items-center justify-center z-10 px-6">
+                <p className="text-white/40 text-sm text-center">
+                  Video indisponivel no momento.
+                </p>
+              </div>
             )}
             {src && (
               <video
                 ref={videoRef}
                 key={src}
-                className="w-full h-full max-h-[70vh] object-contain"
+                className="absolute inset-0 w-full h-full object-cover"
                 src={src}
                 poster={poster}
                 muted
@@ -79,6 +86,7 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
                 preload="metadata"
               />
             )}
+            <div className="crystal-facet absolute inset-0 z-[1]" aria-hidden />
           </div>
         </div>
       </motion.div>
