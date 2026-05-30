@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import type { DemoVideoKey } from '../../lib/videos'
 import { getDemoVideoUrl } from '../../lib/videos'
+import { Spinner } from '../ui/Spinner'
 
 interface VideoFrameProps {
   videoKey: DemoVideoKey
@@ -11,13 +12,14 @@ interface VideoFrameProps {
 export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [failed, setFailed] = useState(false)
+  const [ready, setReady] = useState(false)
+  const [error, setError] = useState(false)
 
-  // Static /videos/*.mp4 — baked into frontend image at build (no S3, no backend stream)
   const src = getDemoVideoUrl(videoKey)
 
   useEffect(() => {
-    setFailed(false)
+    setReady(false)
+    setError(false)
   }, [src])
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          el.play().catch(() => {})
+          void el.play().catch(() => {})
         } else {
           el.pause()
         }
@@ -36,7 +38,7 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [src])
+  }, [src, ready])
 
   return (
     <div ref={containerRef} className={`w-full ${className}`}>
@@ -49,24 +51,37 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
       >
         <div className="rounded-2xl lg:rounded-3xl overflow-hidden bg-fut-card w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
           <div className="relative w-full aspect-video max-h-[220px] sm:max-h-[280px] md:max-h-[320px] lg:max-h-[360px] xl:max-h-[400px] bg-fut-bg flex items-center justify-center">
-            {failed && (
-              <p className="text-white/40 text-sm px-6 text-center">
+            {!ready && !error && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <Spinner className="w-10 h-10" />
+              </div>
+            )}
+            {error && (
+              <p className="absolute inset-0 z-20 flex items-center justify-center text-white/40 text-sm px-6 text-center">
                 Video indisponivel no momento.
               </p>
             )}
-            {!failed && (
-              <video
-                ref={videoRef}
-                key={src}
-                className="w-full h-full object-contain"
-                src={src}
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                onError={() => setFailed(true)}
-              />
-            )}
+            <video
+              ref={videoRef}
+              key={src}
+              className={`w-full h-full object-contain ${ready ? 'opacity-100' : 'opacity-0'}`}
+              src={src}
+              muted
+              loop
+              playsInline
+              preload="auto"
+              onLoadedData={() => {
+                setReady(true)
+                setError(false)
+              }}
+              onCanPlay={() => {
+                setReady(true)
+                setError(false)
+              }}
+              onError={() => {
+                if (!ready) setError(true)
+              }}
+            />
           </div>
         </div>
       </motion.div>

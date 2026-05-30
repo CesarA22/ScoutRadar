@@ -25,9 +25,16 @@ RUN npm ci
 COPY . .
 COPY --from=fetch-videos /out/ ./public/videos/
 
+# Fail build if demo videos missing (avoids empty dist/videos on Railway)
+RUN set -e; \
+  for f in outliers.mp4 compare.mp4 chat.mp4; do \
+    test -s "public/videos/$f" || (echo "MISSING: public/videos/$f — add S3_* build vars or bucket Add to Service on frontend" && exit 1); \
+  done; \
+  ls -lh public/videos/*.mp4
+
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
-RUN npm run build
+RUN npm run build && ls -lh dist/videos/
 
 FROM nginx:alpine
 
