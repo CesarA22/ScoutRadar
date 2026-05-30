@@ -11,8 +11,8 @@ interface VideoFrameProps {
   className?: string
 }
 
-const crystalHeights =
-  'min-h-[280px] sm:min-h-[380px] md:min-h-[460px] lg:min-h-[560px] xl:min-h-[640px]'
+const crystalSize =
+  'w-full aspect-[5/3] min-h-[240px] sm:min-h-[320px] md:min-h-[380px] lg:min-h-[440px] xl:min-h-[500px]'
 
 export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -59,7 +59,7 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
         transition={{ duration: 0.55 }}
         className="crystal-glow w-full"
       >
-        <div className={`crystal-frame crystal-clip relative w-full ${crystalHeights}`}>
+        <div className={`crystal-frame crystal-clip relative ${crystalSize}`}>
           <div className="crystal-clip-inner absolute inset-[4px] bg-fut-bg overflow-hidden">
             {isLoading && !directUrls && (
               <div className="absolute inset-0 flex items-center justify-center z-10">

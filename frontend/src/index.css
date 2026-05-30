@@ -122,30 +122,30 @@ select option {
   padding: 8px;
 }
 
-/* Landing crystal video player */
+/* Landing crystal video player — asymmetric rectangular gem */
 .crystal-clip {
   clip-path: polygon(
-    18% 0%,
-    82% 0%,
-    100% 18%,
-    100% 82%,
-    82% 100%,
+    0% 16%,
+    7% 2%,
+    74% 0%,
+    100% 9%,
+    100% 76%,
+    95% 100%,
     18% 100%,
-    0% 82%,
-    0% 18%
+    0% 88%
   );
 }
 
 .crystal-clip-inner {
   clip-path: polygon(
-    19% 1.5%,
-    81% 1.5%,
-    98.5% 19%,
-    98.5% 81%,
-    81% 98.5%,
+    1.2% 17%,
+    8% 3.5%,
+    73% 1.5%,
+    98.5% 10.5%,
+    98.5% 74.5%,
+    93.5% 98.5%,
     19% 98.5%,
-    1.5% 81%,
-    1.5% 19%
+    1.2% 86.5%
   );
 }
 
@@ -161,10 +161,11 @@ select option {
 .crystal-facet {
   pointer-events: none;
   background: linear-gradient(
-    125deg,
-    rgba(255, 255, 255, 0.12) 0%,
-    transparent 35%,
-    transparent 65%,
-    rgba(255, 255, 255, 0.04) 100%
+    108deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    transparent 28%,
+    transparent 58%,
+    rgba(16, 217, 121, 0.06) 72%,
+    rgba(255, 255, 255, 0.05) 100%
   );
 }

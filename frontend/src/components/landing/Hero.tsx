@@ -22,7 +22,7 @@ export function Hero({ onInterestClick }: HeroProps) {
   const { isAuthenticated } = useAuth()
 
   return (
-    <section className="relative min-h-[min(100dvh,900px)] flex flex-col items-center justify-center px-5 sm:px-8 lg:px-12 pt-32 pb-24 overflow-hidden">
+    <section className="relative min-h-[min(100dvh,900px)] flex flex-col items-center justify-center px-5 sm:px-8 lg:px-12 pt-32 pb-32 sm:pb-40 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
           className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[min(90vw,700px)] h-[min(90vw,700px)] rounded-full bg-fut-gold/8 blur-[100px]"

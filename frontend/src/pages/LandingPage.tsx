@@ -15,7 +15,7 @@ export function LandingPage() {
       <LandingNav onInterestClick={openInterest} />
       <Hero onInterestClick={openInterest} />
 
-      <div id="features">
+      <div id="features" className="space-y-4 sm:space-y-8 lg:space-y-12">
         <FeatureSection
           id="outliers"
           eyebrow="Análise de outliers"

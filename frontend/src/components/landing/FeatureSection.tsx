@@ -30,10 +30,10 @@ export function FeatureSection({
   icon,
 }: FeatureSectionProps) {
   return (
-    <section id={id} className="py-24 sm:py-32 lg:py-40 scroll-mt-24">
-      <div className="w-full max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16">
+    <section id={id} className="py-32 sm:py-44 lg:py-56 scroll-mt-24">
+      <div className="w-full max-w-[1500px] mx-auto px-5 sm:px-10 lg:px-14 xl:px-20">
         <div
-          className={`grid lg:grid-cols-[1fr_1.15fr] gap-14 lg:gap-20 xl:gap-28 items-center ${
+          className={`grid lg:grid-cols-[1fr_1.2fr] gap-16 sm:gap-20 lg:gap-32 xl:gap-40 2xl:gap-48 items-center ${
             reverse ? 'lg:[&>*:first-child]:order-2' : ''
           }`}
         >
@@ -43,7 +43,7 @@ export function FeatureSection({
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6, staggerChildren: 0.1 }}
             variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
-            className="space-y-6 sm:space-y-8 min-w-0"
+            className={`space-y-6 sm:space-y-8 min-w-0 ${reverse ? 'lg:pl-6 xl:pl-10' : 'lg:pr-6 xl:pr-10'}`}
           >
             <motion.div variants={fadeUp} className="flex items-center gap-3">
               {icon}
