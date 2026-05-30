@@ -1,31 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { LogOut } from 'lucide-react'
-import { useState } from 'react'
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../auth/AuthContext'
 import { api } from '../api/client'
-import { FiltersDrawer, FiltersDrawerTrigger } from './FiltersDrawer'
-import { Button } from './ui/Button'
+import { UserMenu } from './user/UserMenu'
 
 export function Layout() {
   const { t } = useTranslation()
-  const { logout, user } = useAuth()
-  const navigate = useNavigate()
   const location = useLocation()
-  const [filtersOpen, setFiltersOpen] = useState(false)
   const isChat = location.pathname === '/chat'
-
-  function handleLogout() {
-    logout()
-    navigate('/')
-  }
-
-  const { data: filterOpts } = useQuery({
-    queryKey: ['filters'],
-    queryFn: () => api.getFilters(),
-  })
 
   const { data: datasetStatus } = useQuery({
     queryKey: ['dataset-status'],
@@ -83,16 +66,7 @@ export function Layout() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {user && (
-              <span className="hidden md:inline text-sm text-white/40">{user.username}</span>
-            )}
-            <Button variant="ghost" onClick={handleLogout} className="!px-3 !py-2">
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sair</span>
-            </Button>
-            <FiltersDrawerTrigger onClick={() => setFiltersOpen(true)} />
-          </div>
+          <UserMenu />
         </div>
       </header>
 
@@ -117,14 +91,6 @@ export function Layout() {
           <Outlet />
         </motion.div>
       </main>
-
-      <FiltersDrawer
-        open={filtersOpen}
-        onClose={() => setFiltersOpen(false)}
-        availableTeams={filterOpts?.teams ?? []}
-        availableClusters={filterOpts?.clusters ?? []}
-        availableSeasons={filterOpts?.seasons ?? [2023, 2024]}
-      />
     </div>
   )
 }

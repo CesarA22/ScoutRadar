@@ -4,6 +4,7 @@ import { Sparkles, Swords } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
+import { PageFilters } from '../components/PageFilters'
 import { PlayerFifaCard } from '../components/PlayerFifaCard'
 import { CompareAskChat } from '../components/CompareAskChat'
 import { Button, GlassCard, Select, Spinner } from '../components/ui'
@@ -63,15 +64,18 @@ export function ComparePage() {
           </h2>
           <p className="page-subtitle">{t('select_two')}</p>
         </div>
-        <Button
-          variant="gold"
-          disabled={!ready}
-          loading={insightMutation.isPending}
-          onClick={() => insightMutation.mutate()}
-        >
-          <Sparkles className="w-4 h-4" />
-          {t('ai_compare_insights')}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <PageFilters />
+          <Button
+            variant="gold"
+            disabled={!ready}
+            loading={insightMutation.isPending}
+            onClick={() => insightMutation.mutate()}
+          >
+            <Sparkles className="w-4 h-4" />
+            {t('ai_compare_insights')}
+          </Button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 lg:gap-6 max-w-4xl xl:max-w-none">

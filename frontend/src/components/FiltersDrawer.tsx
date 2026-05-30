@@ -18,7 +18,7 @@ interface FiltersDrawerProps {
 }
 
 export function FiltersDrawer({ open, onClose, availableTeams, availableClusters, availableSeasons }: FiltersDrawerProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { filters, updateFilter, resetFilters } = useFilters()
 
   const toggle = <T,>(arr: T[], val: T) => (arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val])
@@ -66,12 +66,6 @@ export function FiltersDrawer({ open, onClose, availableTeams, availableClusters
                 <RotateCcw className="w-4 h-4" />
                 {t('clear_filters')}
               </Button>
-
-              <Select label={t('language')} value={i18n.language} onChange={e => i18n.changeLanguage(e.target.value)}>
-                <option value="pt">Português</option>
-                <option value="en">English</option>
-                <option value="es">Español</option>
-              </Select>
 
               <div>
                 <p className="text-xs text-white/50 uppercase tracking-wider mb-2">{t('season')}</p>

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
 import { ExplorerCharts } from '../components/ExplorerCharts'
+import { PageFilters } from '../components/PageFilters'
 import { PlayerCardModal } from '../components/PlayerCardModal'
 import { ScatterMap } from '../components/ScatterMap'
 import { Button, GlassCard, Spinner } from '../components/ui'
@@ -41,19 +42,31 @@ export function ExplorerPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[360px] gap-4">
-        <Spinner />
-        <p className="text-white/40 text-sm">{t('loading')}</p>
+      <div className="page-shell">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <h2 className="page-title text-white">{t('explorer')}</h2>
+          <PageFilters />
+        </div>
+        <div className="flex flex-col items-center justify-center min-h-[360px] gap-4">
+          <Spinner />
+          <p className="text-white/40 text-sm">{t('loading')}</p>
+        </div>
       </div>
     )
   }
 
   if (!players.length) {
     return (
-      <GlassCard className="text-center py-16">
-        <Map className="w-12 h-12 text-white/20 mx-auto mb-4" />
-        <p className="text-white/50">{t('no_players')}</p>
-      </GlassCard>
+      <div className="page-shell">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <h2 className="page-title text-white">{t('explorer')}</h2>
+          <PageFilters />
+        </div>
+        <GlassCard className="text-center py-16">
+          <Map className="w-12 h-12 text-white/20 mx-auto mb-4" />
+          <p className="text-white/50">{t('no_players')}</p>
+        </GlassCard>
+      </div>
     )
   }
 
@@ -61,10 +74,13 @@ export function ExplorerPage() {
     <div className="page-shell">
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h2 className="page-title text-white">{t('explorer')}</h2>
-        <Button variant="gold" loading={insightMutation.isPending} onClick={() => insightMutation.mutate()}>
-          <Sparkles className="w-4 h-4" />
-          {t('ai_insights')}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <PageFilters />
+          <Button variant="gold" loading={insightMutation.isPending} onClick={() => insightMutation.mutate()}>
+            <Sparkles className="w-4 h-4" />
+            {t('ai_insights')}
+          </Button>
+        </div>
       </div>
 
       <ExplorerCharts players={players} />

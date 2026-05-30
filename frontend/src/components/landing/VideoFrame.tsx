@@ -56,8 +56,8 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
         transition={{ duration: 0.5 }}
         className="gradient-border rounded-2xl lg:rounded-3xl p-[1px] shadow-glow-gold/20 w-full"
       >
-        <div className="rounded-2xl lg:rounded-3xl overflow-hidden bg-fut-card w-full">
-          <div className="relative w-full min-h-[280px] sm:min-h-[380px] md:min-h-[460px] lg:min-h-[560px] xl:min-h-[640px] bg-fut-bg flex items-center justify-center">
+        <div className="rounded-2xl lg:rounded-3xl overflow-hidden bg-fut-card w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
+          <div className="relative w-full aspect-video max-h-[220px] sm:max-h-[280px] md:max-h-[320px] lg:max-h-[360px] xl:max-h-[400px] bg-fut-bg flex items-center justify-center">
             {isLoading && !directUrls && (
               <Spinner className="w-10 h-10" />
             )}
@@ -70,7 +70,7 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
               <video
                 ref={videoRef}
                 key={src}
-                className="w-full h-full max-h-[80vh] object-contain"
+                className="w-full h-full object-contain"
                 src={src}
                 poster={poster}
                 muted

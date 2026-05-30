@@ -1,11 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { api } from '../api/client'
+import { api, type AuthUser } from '../api/client'
+import { applyUserPreferences } from '../lib/preferences'
 import { clearToken, getToken, setToken } from './token'
-
-export interface AuthUser {
-  id: number
-  username: string
-}
 
 interface AuthContextValue {
   user: AuthUser | null
@@ -13,10 +9,18 @@ interface AuthContextValue {
   loading: boolean
   login: (username: string, password: string) => Promise<void>
   logout: () => void
+  refreshUser: () => Promise<void>
+  setUser: (user: AuthUser) => void
   isAuthenticated: boolean
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+function syncPreferences(user: AuthUser) {
+  const theme = user.theme === 'light' ? 'light' : 'dark'
+  const language = user.language === 'en' || user.language === 'es' ? user.language : 'pt'
+  applyUserPreferences(theme, language)
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setTokenState] = useState<string | null>(() => getToken())
@@ -29,6 +33,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
+  const refreshUser = useCallback(async () => {
+    const me = await api.authMe()
+    setUser(me)
+    syncPreferences(me)
+  }, [])
+
   useEffect(() => {
     if (!token) {
       setUser(null)
@@ -38,7 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     api.authMe()
       .then(u => {
-        if (!cancelled) setUser(u)
+        if (!cancelled) {
+          setUser(u)
+          syncPreferences(u)
+        }
       })
       .catch(() => {
         if (!cancelled) logout()
@@ -55,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokenState(access_token)
     const me = await api.authMe()
     setUser(me)
+    syncPreferences(me)
   }, [])
 
   const value = useMemo(
@@ -64,9 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       login,
       logout,
+      refreshUser,
+      setUser,
       isAuthenticated: !!token && !!user,
     }),
-    [user, token, loading, login, logout],
+    [user, token, loading, login, logout, refreshUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -77,3 +93,5 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
   return ctx
 }
+
+export type { AuthUser }

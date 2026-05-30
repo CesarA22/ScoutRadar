@@ -19,14 +19,19 @@ def get_current_user(
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    username = decode_access_token(credentials.credentials)
-    if not username:
+    subject = decode_access_token(credentials.credentials)
+    if not subject:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    user = db.query(User).filter(User.username == username, User.is_active.is_(True)).first()
+    try:
+        user_id = int(subject)
+    except ValueError:
+        user = db.query(User).filter(User.username == subject, User.is_active.is_(True)).first()
+    else:
+        user = db.query(User).filter(User.id == user_id, User.is_active.is_(True)).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -4,6 +4,7 @@ import { TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
+import { PageFilters } from '../components/PageFilters'
 import { PlayerCardModal } from '../components/PlayerCardModal'
 import { PlayerFifaCard } from '../components/PlayerFifaCard'
 import { GlassCard, Select, Spinner } from '../components/ui'
@@ -51,11 +52,14 @@ export function OutliersPage() {
           </h2>
           <p className="page-subtitle">Top prospects — clique na carta para detalhes</p>
         </div>
-        <Select label={t('metric')} value={metric} onChange={e => setMetric(e.target.value)} className="w-full sm:w-56 lg:w-64">
-          {METRICS.map(m => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </Select>
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <PageFilters />
+          <Select label={t('metric')} value={metric} onChange={e => setMetric(e.target.value)} className="w-full sm:w-56 lg:w-64">
+            {METRICS.map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </Select>
+        </div>
       </div>
 
       {!items.length ? (

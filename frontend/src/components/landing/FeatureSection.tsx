@@ -33,7 +33,7 @@ export function FeatureSection({
     <section id={id} className="py-32 sm:py-44 lg:py-56 scroll-mt-24">
       <div className="w-full max-w-[1500px] mx-auto px-5 sm:px-10 lg:px-14 xl:px-20">
         <div
-          className={`grid lg:grid-cols-[1fr_1.2fr] gap-16 sm:gap-20 lg:gap-32 xl:gap-40 2xl:gap-48 items-center ${
+          className={`grid lg:grid-cols-2 gap-16 sm:gap-20 lg:gap-32 xl:gap-40 2xl:gap-48 items-center ${
             reverse ? 'lg:[&>*:first-child]:order-2' : ''
           }`}
         >

@@ -5,7 +5,31 @@ import { clearToken, getToken } from '../auth/token'
 /** Empty in local dev (Vite proxy). Set VITE_API_URL on Railway to the backend public URL. */
 const BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
 
-export type AuthUser = { id: number; username: string }
+export type AuthUser = {
+  id: number
+  username: string
+  email?: string | null
+  avatar_url?: string | null
+  theme?: 'dark' | 'light'
+  language?: 'pt' | 'en' | 'es'
+}
+
+export type AvailabilityCheck = { username_available: boolean; email_available: boolean }
+
+export type UpdateProfilePayload = {
+  username?: string
+  email?: string
+  current_password?: string
+  new_password?: string
+  theme?: 'dark' | 'light'
+  language?: 'pt' | 'en' | 'es'
+}
+
+export function mediaUrl(path: string | null | undefined): string | undefined {
+  if (!path) return undefined
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return `${BASE}${path}`
+}
 
 let onUnauthorized: (() => void) | null = null
 
@@ -63,6 +87,43 @@ export const api = {
     ),
 
   authMe: () => fetchJson<AuthUser>(`${BASE}/api/v1/auth/me`),
+
+  checkAvailability: (params: { username?: string; email?: string }) => {
+    const q = new URLSearchParams()
+    if (params.username) q.set('username', params.username)
+    if (params.email) q.set('email', params.email)
+    return fetchJson<AvailabilityCheck>(`${BASE}/api/v1/auth/check-availability?${q}`)
+  },
+
+  updateProfile: (payload: UpdateProfilePayload) =>
+    fetchJson<{ user: AuthUser; access_token?: string | null }>(`${BASE}/api/v1/auth/me`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+
+  uploadAvatar: async (file: File) => {
+    const token = getToken()
+    const form = new FormData()
+    form.append('file', file)
+    const headers = new Headers()
+    if (token) headers.set('Authorization', `Bearer ${token}`)
+    const res = await fetch(`${BASE}/api/v1/auth/me/avatar`, { method: 'POST', body: form, headers })
+    if (res.status === 401) {
+      clearToken()
+      onUnauthorized?.()
+      throw new Error('Unauthorized')
+    }
+    if (!res.ok) {
+      let detail = `API error ${res.status}`
+      try {
+        const err = await res.json() as { detail?: string }
+        if (typeof err.detail === 'string') detail = err.detail
+      } catch { /* ignore */ }
+      throw new Error(detail)
+    }
+    return res.json() as Promise<AuthUser>
+  },
 
   getDemoVideoUrl: (key: DemoVideoKey) =>
     fetchJson<{ key: string; url: string; poster_url?: string | null; expires_in?: number }>(

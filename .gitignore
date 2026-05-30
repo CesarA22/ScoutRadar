@@ -16,4 +16,5 @@ frontend/public/videos/*
 data/raw/
 data/cache/
 data/processed/
+data/uploads/
 data/*.zip

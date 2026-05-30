@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.deps import get_current_user
 from app.api.routes import auth, chat, contact, dataset, demo_videos, filters, health, metrics, outliers, players
-from app.config import get_settings
+from app.config import REPO_ROOT, get_settings
 
 
 @asynccontextmanager
@@ -37,6 +39,10 @@ def create_app() -> FastAPI:
     app.include_router(metrics.router, prefix="/api/v1", dependencies=protected)
     app.include_router(dataset.router, prefix="/api/v1", dependencies=protected)
     app.include_router(chat.router, prefix="/api/v1", dependencies=protected)
+
+    uploads_dir = Path(REPO_ROOT) / "data" / "uploads"
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
     return app
 
