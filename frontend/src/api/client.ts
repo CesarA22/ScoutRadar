@@ -31,11 +31,14 @@ export function mediaUrl(path: string | null | undefined): string | undefined {
   return `${BASE}${path}`
 }
 
-/** Media played in <video>/<img> — keep same-origin to avoid ORB (use /api/... not cross-origin backend URL). */
+/** URLs for <video>/<img> demo streams — prefer backend host (vite proxy times out on large MP4). */
 export function sameOriginMediaUrl(path: string | null | undefined): string | undefined {
   if (!path) return undefined
   if (path.startsWith('http://') || path.startsWith('https://')) return path
-  return path.startsWith('/') ? path : `/${path}`
+  const normalized = path.startsWith('/') ? path : `/${path}`
+  const isStream = normalized.includes('/stream') || normalized.includes('/poster')
+  if (isStream && BASE) return `${BASE}${normalized}`
+  return normalized
 }
 
 let onUnauthorized: (() => void) | null = null

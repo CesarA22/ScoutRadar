@@ -4,9 +4,14 @@ import react from '@vitejs/plugin-react'
 const proxyTarget = process.env.VITE_PROXY_TARGET || 'http://127.0.0.1:8000'
 
 const apiProxy = {
-  '/api': { target: proxyTarget, changeOrigin: true },
+  '/api': {
+    target: proxyTarget,
+    changeOrigin: true,
+    timeout: 600_000,
+    proxyTimeout: 600_000,
+  },
   '/health': { target: proxyTarget, changeOrigin: true },
-  '/uploads': { target: proxyTarget, changeOrigin: true },
+  '/uploads': { target: proxyTarget, changeOrigin: true, timeout: 120_000 },
 }
 
 export default defineConfig({

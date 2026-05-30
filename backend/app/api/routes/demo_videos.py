@@ -1,5 +1,6 @@
 import logging
 
+from botocore.exceptions import ClientError
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import RedirectResponse, StreamingResponse
 
@@ -53,16 +54,10 @@ def storage_check():
     get_object_error = None
     if ok and storage.DEMO_VIDEO_FILES.get("chat"):
         try:
-            sample_presign = storage.generate_presigned_get_url("chat.mp4")[:120] + "..."
+            sample_presign = storage.generate_presigned_get_url("chat.mp4")[:160] + "..."
         except Exception as exc:
             presign_error = str(exc)
-        try:
-            get_object_ok = storage.object_exists("chat.mp4")
-            if not get_object_ok:
-                get_object_error = "chat.mp4 not found (head_object)"
-        except Exception as exc:
-            get_object_ok = False
-            get_object_error = str(exc)
+        get_object_ok, get_object_error = storage.test_get_object("chat.mp4")
 
     return {
         "configured": True,
@@ -71,7 +66,8 @@ def storage_check():
         "bucket": settings.s3_bucket_name,
         "endpoint": settings.s3_endpoint_url,
         "region": settings.s3_region,
-        "addressing_style": storage._s3_addressing_style(settings.s3_endpoint_url),
+        "addressing_style": storage.s3_addressing_style_label(),
+        "signing_region": storage._resolve_region(settings.s3_region, settings.s3_endpoint_url),
         "listed_sample": listed,
         "demo_files": demo_files,
         "demo_found_in_list": found,
@@ -100,6 +96,22 @@ def _s3_stream_response(filename: str, request: Request) -> StreamingResponse:
     range_header = request.headers.get("range")
     try:
         obj = storage.get_object_body(filename, range_header=range_header)
+    except ClientError as exc:
+        code = exc.response.get("Error", {}).get("Code", "")
+        msg = exc.response.get("Error", {}).get("Message", str(exc))
+        log.error("S3 get_object failed for %s: %s %s", filename, code, msg)
+        if code in ("AccessDenied", "403"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "Access denied no bucket. No Railway: bucket > Add to Service no backend, "
+                    "REGION=auto, e variáveis sem aspas."
+                ),
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Could not read video from storage: {code}: {msg}",
+        ) from exc
     except Exception as exc:
         log.exception("S3 get_object failed for %s", filename)
         raise HTTPException(
@@ -115,11 +127,8 @@ def _s3_stream_response(filename: str, request: Request) -> StreamingResponse:
         "Accept-Ranges": "bytes",
         "Cache-Control": "public, max-age=3600",
         "Cross-Origin-Resource-Policy": "cross-origin",
+        "Access-Control-Allow-Origin": "*",
     }
-    origin = request.headers.get("origin")
-    if origin:
-        headers["Access-Control-Allow-Origin"] = origin
-        headers["Vary"] = "Origin"
     if obj.get("ContentLength") is not None:
         headers["Content-Length"] = str(obj["ContentLength"])
     if obj.get("ContentRange"):
@@ -135,7 +144,7 @@ def _s3_stream_response(filename: str, request: Request) -> StreamingResponse:
 
 @router.get("/{key}/stream")
 def stream_demo_video(key: str, request: Request):
-    """Redirect to presigned S3 URL (virtual-hosted). Same-origin entry avoids ORB."""
+    """Stream video bytes from bucket via backend (reliable for private Railway buckets)."""
     if key not in ALLOWED_KEYS:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown demo video")
 
@@ -147,10 +156,9 @@ def stream_demo_video(key: str, request: Request):
         )
 
     filename = storage.DEMO_VIDEO_FILES[key]
-    # ?proxy=1 forces byte streaming through backend (debug only)
-    if request.query_params.get("proxy") == "1":
-        return _s3_stream_response(filename, request)
-    return _redirect_to_presigned(filename)
+    if request.query_params.get("redirect") == "1":
+        return _redirect_to_presigned(filename)
+    return _s3_stream_response(filename, request)
 
 
 @router.get("/{key}/poster")
@@ -166,9 +174,7 @@ def stream_demo_poster(key: str, request: Request):
     if not settings.s3_configured:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Video storage is not configured")
 
-    if request.query_params.get("proxy") == "1":
-        return _s3_stream_response(poster_name, request)
-    return _redirect_to_presigned(poster_name)
+    return _s3_stream_response(poster_name, request)
 
 
 @router.get("/{key}", response_model=DemoVideoUrlResponse)
