@@ -110,16 +110,24 @@ def test_connection() -> tuple[bool, str]:
 
 
 def get_object_body(filename: str, range_header: str | None = None) -> dict:
-    """Fetch object from bucket (used by backend video proxy)."""
+    """Fetch object from bucket (used by optional ?proxy=1 streaming)."""
     settings = get_settings()
     if not settings.s3_configured:
         raise RuntimeError("S3 storage is not configured")
 
     params: dict = {"Bucket": settings.s3_bucket_name, "Key": _object_key(filename)}
-    if range_header:
-        params["Range"] = range_header
+    if range_header and range_header.strip().lower().startswith("bytes="):
+        params["Range"] = range_header.strip()
 
-    return _s3_client().get_object(**params)
+    client = _s3_client()
+    try:
+        return client.get_object(**params)
+    except ClientError as exc:
+        code = exc.response.get("Error", {}).get("Code", "")
+        if range_header and code in ("InvalidRange", "InvalidArgument"):
+            params.pop("Range", None)
+            return client.get_object(**params)
+        raise
 
 
 def generate_presigned_get_url(filename: str, expires_seconds: int | None = None) -> str:

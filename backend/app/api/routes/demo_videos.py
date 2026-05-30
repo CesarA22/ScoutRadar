@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import APIRouter, HTTPException, Request, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 
 from app.config import get_settings
 from app.schemas.demo_videos import DemoVideoUrlResponse
@@ -49,11 +49,20 @@ def storage_check():
 
     sample_presign = None
     presign_error = None
+    get_object_ok = None
+    get_object_error = None
     if ok and storage.DEMO_VIDEO_FILES.get("chat"):
         try:
             sample_presign = storage.generate_presigned_get_url("chat.mp4")[:120] + "..."
         except Exception as exc:
             presign_error = str(exc)
+        try:
+            get_object_ok = storage.object_exists("chat.mp4")
+            if not get_object_ok:
+                get_object_error = "chat.mp4 not found (head_object)"
+        except Exception as exc:
+            get_object_ok = False
+            get_object_error = str(exc)
 
     return {
         "configured": True,
@@ -68,8 +77,23 @@ def storage_check():
         "demo_found_in_list": found,
         "sample_presign_prefix": sample_presign,
         "presign_error": presign_error,
-        "recommended_playback": "backend proxy at /api/v1/demo-videos/{key}/stream",
+        "get_object_ok": get_object_ok,
+        "get_object_error": get_object_error,
+        "recommended_playback": "redirect to presigned URL at /api/v1/demo-videos/{key}/stream",
     }
+
+
+def _redirect_to_presigned(filename: str) -> RedirectResponse:
+    """Redirect browser to S3 presigned URL — avoids proxy 502 on large video bodies."""
+    try:
+        url = storage.generate_presigned_get_url(filename)
+    except Exception as exc:
+        log.exception("Failed to presign %s", filename)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Could not sign video URL: {exc}",
+        ) from exc
+    return RedirectResponse(url=url, status_code=307)
 
 
 def _s3_stream_response(filename: str, request: Request) -> StreamingResponse:
@@ -111,7 +135,7 @@ def _s3_stream_response(filename: str, request: Request) -> StreamingResponse:
 
 @router.get("/{key}/stream")
 def stream_demo_video(key: str, request: Request):
-    """Proxy video from private bucket — avoids presigned URL 403 in the browser."""
+    """Redirect to presigned S3 URL (virtual-hosted). Same-origin entry avoids ORB."""
     if key not in ALLOWED_KEYS:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown demo video")
 
@@ -122,7 +146,11 @@ def stream_demo_video(key: str, request: Request):
             detail="Video storage is not configured",
         )
 
-    return _s3_stream_response(storage.DEMO_VIDEO_FILES[key], request)
+    filename = storage.DEMO_VIDEO_FILES[key]
+    # ?proxy=1 forces byte streaming through backend (debug only)
+    if request.query_params.get("proxy") == "1":
+        return _s3_stream_response(filename, request)
+    return _redirect_to_presigned(filename)
 
 
 @router.get("/{key}/poster")
@@ -138,7 +166,9 @@ def stream_demo_poster(key: str, request: Request):
     if not settings.s3_configured:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Video storage is not configured")
 
-    return _s3_stream_response(poster_name, request)
+    if request.query_params.get("proxy") == "1":
+        return _s3_stream_response(poster_name, request)
+    return _redirect_to_presigned(poster_name)
 
 
 @router.get("/{key}", response_model=DemoVideoUrlResponse)
