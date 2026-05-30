@@ -6,22 +6,20 @@ RUN npm ci
 
 COPY . .
 
-# Build with empty VITE_API_URL so /api calls are same-origin (see vite preview proxy).
+# Empty = same-origin /api (nginx proxies to BACKEND_URL at runtime)
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
-# Runtime (Railway frontend service): VITE_PROXY_TARGET=https://your-backend.up.railway.app
+FROM nginx:alpine
 
-FROM node:20-alpine
-WORKDIR /app
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.prod.conf.template /etc/nginx/templates/default.conf.template
 
-COPY package.json package-lock.json* ./
-RUN npm ci
-
-COPY vite.config.ts ./
-COPY --from=build /app/dist ./dist
+# Railway frontend service variables (runtime):
+#   BACKEND_URL=https://your-backend.up.railway.app  (no trailing slash)
+#   PORT=8080  (set automatically by Railway)
+ENV BACKEND_URL=http://127.0.0.1:8000
+ENV PORT=8080
 
 EXPOSE 8080
-
-CMD ["sh", "-c", "npx vite preview --host 0.0.0.0 --port ${PORT:-8080}"]

@@ -75,7 +75,7 @@ def storage_check():
         "presign_error": presign_error,
         "get_object_ok": get_object_ok,
         "get_object_error": get_object_error,
-        "recommended_playback": "redirect to presigned URL at /api/v1/demo-videos/{key}/stream",
+        "recommended_playback": "GET /api/v1/demo-videos/{key}/stream (same-origin via frontend nginx proxy)",
     }
 
 

@@ -1,10 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { useEffect, useRef } from 'react'
-import { api, sameOriginMediaUrl } from '../../api/client'
+import { useEffect, useRef, useState } from 'react'
 import type { DemoVideoKey } from '../../lib/videos'
 import { getDemoPosterUrl, getDemoVideoUrl, useDirectVideoUrls } from '../../lib/videos'
-import { Spinner } from '../ui/Spinner'
+
+/** Same-origin path — nginx/vite proxy forwards to backend (never cross-origin). */
+export function demoVideoStreamUrl(key: DemoVideoKey): string {
+  return `/api/v1/demo-videos/${key}/stream`
+}
 
 interface VideoFrameProps {
   videoKey: DemoVideoKey
@@ -15,21 +17,14 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const directUrls = useDirectVideoUrls()
+  const [failed, setFailed] = useState(false)
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['demo-video', videoKey],
-    queryFn: () => api.getDemoVideoUrl(videoKey),
-    enabled: !directUrls,
-    staleTime: 50 * 60 * 1000,
-    retry: 1,
-  })
+  const src = directUrls ? getDemoVideoUrl(videoKey) : demoVideoStreamUrl(videoKey)
+  const poster = directUrls ? getDemoPosterUrl(videoKey) : undefined
 
-  const src = directUrls
-    ? getDemoVideoUrl(videoKey)
-    : sameOriginMediaUrl(data?.url)
-  const poster = directUrls
-    ? getDemoPosterUrl(videoKey)
-    : (sameOriginMediaUrl(data?.poster_url) ?? undefined)
+  useEffect(() => {
+    setFailed(false)
+  }, [src])
 
   useEffect(() => {
     const el = videoRef.current
@@ -60,15 +55,12 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
       >
         <div className="rounded-2xl lg:rounded-3xl overflow-hidden bg-fut-card w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
           <div className="relative w-full aspect-video max-h-[220px] sm:max-h-[280px] md:max-h-[320px] lg:max-h-[360px] xl:max-h-[400px] bg-fut-bg flex items-center justify-center">
-            {isLoading && !directUrls && (
-              <Spinner className="w-10 h-10" />
-            )}
-            {isError && !directUrls && !isLoading && (
+            {failed && (
               <p className="text-white/40 text-sm px-6 text-center">
                 Video indisponivel no momento.
               </p>
             )}
-            {src && (
+            {!failed && (
               <video
                 ref={videoRef}
                 key={src}
@@ -79,6 +71,7 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
                 loop
                 playsInline
                 preload="metadata"
+                onError={() => setFailed(true)}
               />
             )}
           </div>
