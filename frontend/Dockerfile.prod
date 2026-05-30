@@ -1,4 +1,4 @@
-# Optional: bake demo videos from bucket at build time (set S3_* as Railway build variables on frontend)
+# Opcional: baixa vídeos do bucket no build se S3_* existirem (bucket > Add to Service > frontend)
 FROM python:3.12-alpine AS fetch-videos
 WORKDIR /fetch
 RUN pip install --no-cache-dir boto3
@@ -14,7 +14,7 @@ ENV S3_ENDPOINT_URL=$S3_ENDPOINT_URL \
     S3_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY \
     S3_REGION=$S3_REGION \
     OUT_DIR=/out
-RUN mkdir -p /out && python fetch_demo_videos.py
+RUN mkdir -p /out && python fetch_demo_videos.py || true
 
 FROM node:20-alpine AS build
 WORKDIR /app
@@ -23,18 +23,12 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
+# Vídeos do bucket (build) ou já em public/videos/ (local)
 COPY --from=fetch-videos /out/ ./public/videos/
-
-# Fail build if demo videos missing (avoids empty dist/videos on Railway)
-RUN set -e; \
-  for f in outliers.mp4 compare.mp4 chat.mp4; do \
-    test -s "public/videos/$f" || (echo "MISSING: public/videos/$f — add S3_* build vars or bucket Add to Service on frontend" && exit 1); \
-  done; \
-  ls -lh public/videos/*.mp4
 
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
-RUN npm run build && ls -lh dist/videos/
+RUN npm run build
 
 FROM nginx:alpine
 

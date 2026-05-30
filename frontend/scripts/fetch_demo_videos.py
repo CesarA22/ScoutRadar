@@ -17,7 +17,7 @@ def main() -> int:
     out_dir = os.environ.get("OUT_DIR", "public/videos")
 
     if not all([endpoint, bucket, key_id, secret]):
-        print("SKIP: S3_* build args not set — demo videos must exist in public/videos/ or link bucket to backend.")
+        print("SKIP: S3_* build args not set — build continues; landing uses API fallback for videos.")
         return 0
 
     os.makedirs(out_dir, exist_ok=True)
