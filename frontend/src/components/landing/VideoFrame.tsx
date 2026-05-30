@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { useEffect, useRef } from 'react'
-import { api } from '../../api/client'
+import { api, mediaUrl } from '../../api/client'
 import type { DemoVideoKey } from '../../lib/videos'
 import { getDemoPosterUrl, getDemoVideoUrl, useDirectVideoUrls } from '../../lib/videos'
 import { Spinner } from '../ui/Spinner'
@@ -24,10 +24,12 @@ export function VideoFrame({ videoKey, className = '' }: VideoFrameProps) {
     retry: 1,
   })
 
-  const src = directUrls ? getDemoVideoUrl(videoKey) : data?.url
+  const src = directUrls
+    ? getDemoVideoUrl(videoKey)
+    : (data?.url ? (mediaUrl(data.url) ?? data.url) : undefined)
   const poster = directUrls
     ? getDemoPosterUrl(videoKey)
-    : (data?.poster_url ?? getDemoPosterUrl(videoKey))
+    : (data?.poster_url ? (mediaUrl(data.poster_url) ?? data.poster_url) : getDemoPosterUrl(videoKey))
 
   useEffect(() => {
     const el = videoRef.current

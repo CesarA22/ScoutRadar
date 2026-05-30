@@ -29,18 +29,27 @@ def _resolve_region(raw: str) -> str:
     return raw.strip() if raw and raw.strip() else "auto"
 
 
+def _s3_addressing_style(endpoint_url: str) -> str:
+    """Railway / R2 (t3.storageapi.dev) require virtual-hosted URLs for GET/presign."""
+    host = endpoint_url.lower()
+    if "storageapi.dev" in host or "storage.railway.app" in host:
+        return "virtual"
+    return "path"
+
+
 @lru_cache
 def _s3_client():
     settings = get_settings()
+    endpoint = settings.s3_endpoint_url.rstrip("/")
     return boto3.client(
         "s3",
-        endpoint_url=settings.s3_endpoint_url.rstrip("/"),
+        endpoint_url=endpoint,
         aws_access_key_id=settings.s3_access_key_id,
         aws_secret_access_key=settings.s3_secret_access_key,
         region_name=_resolve_region(settings.s3_region),
         config=Config(
             signature_version="s3v4",
-            s3={"addressing_style": "path"},
+            s3={"addressing_style": _s3_addressing_style(endpoint)},
         ),
     )
 
@@ -98,6 +107,19 @@ def test_connection() -> tuple[bool, str]:
         return False, f"{code}: {msg}"
     except Exception as exc:
         return False, str(exc)
+
+
+def get_object_body(filename: str, range_header: str | None = None) -> dict:
+    """Fetch object from bucket (used by backend video proxy)."""
+    settings = get_settings()
+    if not settings.s3_configured:
+        raise RuntimeError("S3 storage is not configured")
+
+    params: dict = {"Bucket": settings.s3_bucket_name, "Key": _object_key(filename)}
+    if range_header:
+        params["Range"] = range_header
+
+    return _s3_client().get_object(**params)
 
 
 def generate_presigned_get_url(filename: str, expires_seconds: int | None = None) -> str:
