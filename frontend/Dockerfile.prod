@@ -23,3 +23,6 @@ ENV BACKEND_URL=http://127.0.0.1:8000
 ENV PORT=8080
 
 EXPOSE 8080
+
+# Default for Docker; railway.json startCommand must match (no npx/vite preview).
+CMD ["nginx", "-g", "daemon off;"]
